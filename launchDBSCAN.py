@@ -6,7 +6,7 @@ DBSCAN Launcher.
     :param	*args: 		if the dataset is 2D or 3D, plotting can be enabled with a 2 or a 3 as an argument.
 """	
 import sys
-import DBSCAN_Adap2 as DBSCAN
+import DBSCAN as DBSCAN
 import numpy as np
 
 def main(dataFile, fragSize, epsilon, minPoints, numParts, *args):
