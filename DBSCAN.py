@@ -125,6 +125,7 @@ def DBSCAN(dataFile, fragSize, epsilon, minPoints, numParts):
     :param fragSize:    size used for space partition.
     :param numParts:    number of parts in which fragData is divided for processing.
     :return defClusters:list of the final clusters.
+    :return fragVec:    object used for the plotting.
     """
     print "Density Based Scan started."
     start = time.time()
@@ -163,7 +164,7 @@ def DBSCAN(dataFile, fragSize, epsilon, minPoints, numParts):
     print "Number of clusters found: "+str(len(defClusters))
     sys.stdout.flush()
     sys.stderr.flush()
-    return defClusters
+    return [defClusters, fragVec]
 
 def syncClusters(clusters, epsilon, numParts):
     """

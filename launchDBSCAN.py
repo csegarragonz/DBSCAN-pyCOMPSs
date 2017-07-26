@@ -27,7 +27,9 @@ PyCOMPSs Mathematical Library: Clustering: DBSCAN
     :input minPoints:   minimum number of neighbors for a point to be considered a core point.
     :input numParts:    scale parameter.
     :input dim:         optional parameter, 2D/3D for 2D/3D dataset plotting
+    :output outDBSCAN:  text file with each cluster and its points.
 """
+
 import sys
 import numpy as np
 import DBSCAN as DBSCAN
