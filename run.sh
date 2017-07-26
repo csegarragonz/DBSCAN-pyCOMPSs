@@ -22,11 +22,11 @@ PyCOMPSs Mathematical Library: Clustering: DBSCAN
 """
 
 #Running without COMPSs. Comment all the @task, compss_wait_on and COMPSs imports.
-#python ./launchDBSCAN.py ./data/ds1s.txt 3 0.015 10 1 2D
+#python ./launchDBSCAN.py ./data/moons.txt 3 0.015 10 1 2D
 
 #Local execution: -d for debugging, -t for tracing and -g for the dependency graph.
-runcompss --lang=python -g -d -t ./launchDBSCAN.py ./data/moons.txt 3 0.1 10 1 2D
+runcompss --lang=python -g -d -t ./launchDBSCAN.py ./data/moons.txt 8 0.1 10 8 2D
 
 #Running on a Cluster with COMPSs installed.
-#enqueue_compss --lang=python --num_nodes=6 --exec_time=10 --worker_working_dir=gpfs/home/bsc19/bsc19685/tmp/ ./launchDBSCAN.py ./data/5k.txt 8 0.015 10 24
+#enqueue_compss --lang=python --num_nodes=6 --exec_time=10 --worker_working_dir=gpfs/home/bsc19/bsc19685/tmp/ ./launchDBSCAN.py ./data/blobs.txt 8 0.015 10 24
 
