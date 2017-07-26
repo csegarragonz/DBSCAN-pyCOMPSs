@@ -21,17 +21,17 @@ PyCOMPSs Mathematical Library: Clustering: DBSCAN
     This file contains the DBSCAN algorithm.
 """
 
-from classes.cluster import Cluster
-from classes.DS import DisjointSet
 import itertools
 import time
 import numpy as np
 import sys
 import math
+from classes.cluster import Cluster
+from classes.DS import DisjointSet
+from collections import defaultdict
 from pycompss.api.task import task
 from pycompss.api.parameter import *
 from pycompss.api.api import compss_wait_on
-from collections import defaultdict
  
 def normalizeData(dataFile):
     """
@@ -190,7 +190,7 @@ def syncClusters(clusters, epsilon, numParts):
             for k in range(numComp):
                 for l in range(numComp):
                     if enable[i][j][numComp*k + l]: 
-                        possibleClusters[i*n + k].append(j*numComp + l)
+                        possibleClusters[i*numComp + k].append(j*numComp + l)
     l = len(clusters)
     for i in range(tmpDel):
         possibleClusters.pop(l - 1 - i, None)
