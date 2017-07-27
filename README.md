@@ -6,7 +6,7 @@ DBSCAN for PyCOMPSs is a distributed approach to the well known clustering algor
   2. A core point retrieval is performed simultaneously at chunks of each chunk.
   3. Results are synced using an adjacency matrix.
   4. For each resulting cluster, a reachable point retrieval is performed and results lastly updated.
-![](https://github.com/csegarragonz/DBSCAN-pyCOMPSs/blob/master/img/animation.gif)
+![](https://github.com/csegarragonz/DBSCAN-pyCOMPSs/blob/master/img/animation.gif "Main Workflow")
 ## 2. Files
 ## 3. Requirements
   1. Python 2.7.x (with NumPy) **_COMPSs won't work with Python 3.x_**
