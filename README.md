@@ -27,3 +27,8 @@ In this repository you will find the following files and directories:
   1. Python 2.7.x (with NumPy) **_COMPSs won't work with Python 3.x_**
   2. [COMPSs 2.1.](https://www.bsc.es/research-and-development/software-and-apps/software-list/comp-superscalar/downloads "Download COMPSs"), if you are trying to install it [this manual](http://compss.bsc.es/releases/compss/latest/docs/COMPSs_Installation_Manual.pdf?tracked=true "Link to COMPSs installation manual") might be useful.
   3. Matplotlib (in case plotting is desired)
+## 4. Inquires and Contact
+For any inquires or problems when trying to run the algorithm or COMPSs itself, don't hesitate to contact me at:
+a=carlos.segarra
+b=bsc.es
+mailto: a @ b
