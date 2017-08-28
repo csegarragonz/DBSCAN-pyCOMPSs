@@ -1,0 +1,9 @@
+#Ignore all the .pyc files
+*.pyc
+
+#Ignore the normalized data files
+*n.txt
+
+#Ignore generated outputs
+*.png
+outDBSCAN.txt
