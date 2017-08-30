@@ -33,7 +33,7 @@ import numpy as np
 import DBSCAN as DBSCAN
 
 def main(dataFile, fragSize, epsilon, minPoints, numParts, *args):
-    [defCluster, fragVec] = DBSCAN.DBSCAN(dataFile, fragSize, epsilon, minPoints,                                       numParts)
+    [defCluster, fragVec] = DBSCAN.DBSCAN(dataFile, int(fragSize), float(epsilon),int(minPoints), int(numParts))
     newName = dataFile[dataFile.find('.')+1:dataFile.rfind('.')]
     newName = '.'+newName+'n.txt'
     dataset = np.loadtxt(newName)

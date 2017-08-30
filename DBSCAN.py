@@ -56,7 +56,7 @@ def partitionSpace(dataset, fragSize, epsilon):
     fragData = defaultdict(list)
     rangeToEps = defaultdict(list)
     dim = len(dataset[0])
-    fragVec = [[np.max(np.min(dataset, axis=0)[i]-epsilon,0), np.mean(dataset,axis=0)[i],                   np.max(dataset, axis=0)[i]] for i in range(dim)]
+    fragVec = [[np.max(np.min(dataset, axis=0)[i]-epsilon,0), np.mean(dataset,axis=0)[i],                               np.max(dataset, axis=0)[i]] for i in range(dim)]
     size = pow(10,len(str(fragSize+1)))
     for i in range(dim):
         for j in range(fragSize):
