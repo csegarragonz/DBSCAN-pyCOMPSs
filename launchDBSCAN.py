@@ -21,8 +21,6 @@ PyCOMPSs Mathematical Library: Clustering: DBSCAN
     This file contains the DBSCAN launcher.
     :input dataFile:    path to the file where the dataset is stored. Loading is performed by
                         numpy.loadtxt().
-    :input fragSize:    parameter to determine the number of chunks in which the dataset will
-                        be split.
     :input epsilon:     maximum distance under which two points are considered neighbors.
     :input minPoints:   minimum number of neighbors for a point to be considered a core point.
     :input numParts:    scale parameter.
@@ -35,7 +33,7 @@ import numpy as np
 import DBSCAN as DBSCAN
 
 def main(dataFile, fragSize, epsilon, minPoints, numParts, *args):
-    [defCluster, fragVec] = DBSCAN.DBSCAN(dataFile, int(fragSize), float(epsilon), int(minPoints),                                            int(numParts))
+    [defCluster, fragVec] = DBSCAN.DBSCAN(dataFile, fragSize, epsilon, minPoints,                                       numParts)
     newName = dataFile[dataFile.find('.')+1:dataFile.rfind('.')]
     newName = '.'+newName+'n.txt'
     dataset = np.loadtxt(newName)
@@ -79,4 +77,5 @@ def main(dataFile, fragSize, epsilon, minPoints, numParts, *args):
     f.close()
     
 if __name__=='__main__':
-    main(sys.argv[1],float(sys.argv[2]),float(sys.argv[3]), int(sys.argv[4]), sys.argv[5],                                     sys.argv[6] if len(sys.argv) >= 7 else 0)
+    fragSize = 8
+    main(sys.argv[1], fragSize, float(sys.argv[2]), int(sys.argv[3]), sys.argv[4],                                     sys.argv[5] if len(sys.argv) >= 6 else 0)

@@ -20,11 +20,10 @@
 #    This file contains different test run commands.
 
 #Running without COMPSs. Comment all the @task, compss_wait_on and COMPSs imports.
-#python ./launchDBSCAN.py ./data/moons.txt 3 0.015 10 1 2D
+#python ./launchDBSCAN.py ./data/moons.txt 0.015 10 1 2D
 
 #Local execution: -d for debugging, -t for tracing and -g for the dependency graph.
-runcompss --lang=python ./launchDBSCAN.py ./data/ran_data.txt 8 0.03 10 4 2D
+runcompss --lang=python ./launchDBSCAN.py ./data/ran_data.txt 0.03 10 4 2D
 
 #Running on a Cluster with COMPSs installed and all the dependencies.
-#enqueue_compss --lang=python --num_nodes=6 --exec_time=10 --worker_working_dir=gpfs/home/bsc19/bsc19685/tmp/ ./launchDBSCAN.py ./data/blobs.txt 8 0.015 10 24
-
+#enqueue_compss --lang=python --num_nodes=6 --exec_time=10 --worker_working_dir=gpfs/home/bsc19/bsc19685/tmp/ ./launchDBSCAN.py ./data/blobs.txt 0.015 10 24
