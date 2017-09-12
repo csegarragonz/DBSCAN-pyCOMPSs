@@ -23,7 +23,8 @@
 #python ./launchDBSCAN.py ./data/moons.txt 0.015 10 1 2D
 
 #Local execution: -d for debugging, -t for tracing and -g for the dependency graph.
-runcompss --lang=python ./launchDBSCAN.py ./data/ran_data.txt 0.045 10 4 2D
+runcompss --lang=python ./launchDBSCAN.py ./data/ran_data.txt 0.045 10 2 2D
+#runcompss --lang=python ./DBSCAN_Show.py ./data/ran_data.txt 3 0.045 20 4 2D
 
 #Running on a Cluster with COMPSs installed and all the dependencies.
 #enqueue_compss --lang=python --num_nodes=6 --exec_time=10 --worker_working_dir=gpfs/home/bsc19/bsc19685/tmp/ ./launchDBSCAN.py ./data/blobs.txt 0.015 10 24
