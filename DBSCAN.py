@@ -227,7 +227,8 @@ def expandCluster(clusters, fragData, epsilon, minPoints, fragSize, numParts,
     addToClust = [[[] for _ in range(numParts)] for x in range(len(clusters))]
     for numClust,clust in enumerate(clusters):
         for k in range(numParts):
-            neighExpansion(addToClust[numClust][k], clust, fragData, fragSize,                  rangeToEps, epsilon)
+            neighExpansion(addToClust[numClust][k], clust, fragData, fragSize, 
+                rangeToEps, epsilon)
     addToClust = compss_wait_on(addToClust)
     for i,m in enumerate(addToClust):
         addToClust[i] = [j for k in m for j in k]
@@ -275,6 +276,7 @@ def neighExpansion(clustPoints, clust, fragData, fragSize, rangeToEps, epsilon):
         for p in clust.points:
             if np.linalg.norm(point - p) < epsilon:
                 clustPoints.append(point)
+                break
 
 def update(clusters, possibleClusters, returnCluster):
     """
