@@ -60,8 +60,8 @@ def main(dataFile, fragSize, epsilon, minPoints, numParts, *args):
         plt.vlines(fragVec[0], fragVec[1][0], fragVec[1][-1], 'k', 'dashdot', 
             linewidths = 0.1) 
         for i,key in enumerate(defCluster):
-                ax.scatter([p[0] for p in defCluster[i]], [p[1] for p in 
-                    defCluster[i]], color=colours[i], s=1)
+                ax.scatter([p[0] for p in defCluster[i].points], [p[1] for p in 
+                    defCluster[i].points], color=colours[i], s=1)
         plt.savefig('clusters.png')
         plt.close()
     elif len(args) > 0 and args[0] == '3D':
@@ -85,7 +85,7 @@ def main(dataFile, fragSize, epsilon, minPoints, numParts, *args):
     f = open('outDBSCAN.txt', 'w')
     for num,lista in enumerate(defCluster):
         f.write('Cluster ' + str(num) + ':\n')
-        for point in defCluster[num]:
+        for point in defCluster[num].points:
                 f.write(str(point) + '\n')	
     f.close()
     

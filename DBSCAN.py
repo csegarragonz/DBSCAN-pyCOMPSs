@@ -232,19 +232,24 @@ def expandCluster(clusters, fragData, epsilon, minPoints, fragSize, numParts,
     addToClust = compss_wait_on(addToClust)
     for i,m in enumerate(addToClust):
         addToClust[i] = [j for k in m for j in k]
-    pointsToClust = defaultdict(list)
+#    pointsToClust = defaultdict(list)
+    pointsToClust = []
     links = defaultdict(list)
     for i,clust in enumerate(addToClust):
         for p in addToClust[i]:
-            if str(p) in pointsToClust:
-                for c in pointsToClust[str(p)]:
-                    if not i in links[c]: links[c].append(i)
-                    if not c in links[i]: links[i].append(c)
-                pointsToClust[str(p)].append(i)
-            else:
-                pointsToClust[str(p)].append(i)
-                clusters[i].addPoint(p) 
-    return update(clusters, links, False)
+            if not str(p) in pointsToClust:
+                pointsToClust.append(str(p))
+                clusters[i].addPoint(p)
+    return clusters  
+#            if str(p) in pointsToClust:
+#                for c in pointsToClust[str(p)]:
+#                    if not i in links[c]: links[c].append(i)
+#                    if not c in links[i]: links[i].append(c)
+#                pointsToClust[str(p)].append(i)
+#            else:
+#                pointsToClust[str(p)].append(i)
+#                clusters[i].addPoint(p) 
+#    return update(clusters, links, False)
             
 @task(clustPoints = INOUT)
 def neighExpansion(clustPoints, clust, fragData, fragSize, rangeToEps, epsilon):
