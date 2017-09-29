@@ -309,7 +309,7 @@ def neigh_expansion(clustPoints, clust, fragData, fragSize, rangeToEps,
                 clustPoints.append(point)
                 break
 
-def DBSCAN(dataFile, fragSize, epsilon, minPoints, numParts):
+def DBSCAN(data_file, fragSize, epsilon, minPoints, numParts):
     """
     Main DBSCAN algorithm.
     :param dataFile: file where the data is stored.
@@ -325,9 +325,9 @@ def DBSCAN(dataFile, fragSize, epsilon, minPoints, numParts):
     """
     start = time.time()
     print "Density Based Scan started."
-    normData = normalize_data(dataFile) 
+    norm_data = normalize_data(data_file) 
     print "Normalize data: " + str(normData)
-    dataset = np.loadtxt(normData)
+    dataset = np.loadtxt(norm_data)
     [fragData, fragVec, rangeToEps] = partition_space(dataset, fragSize, 
         epsilon) 
     print "Starting partial scan..."
