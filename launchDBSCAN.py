@@ -32,7 +32,7 @@ PyCOMPSs Mathematical Library: Clustering: DBSCAN
 
 import sys
 import numpy as np
-import DBSCAN as DBSCAN
+import DBSCAN_Old as DBSCAN
 
 def main(dataFile, fragSize, epsilon, minPoints, numParts, *args):
     [defCluster, fragVec] = DBSCAN.DBSCAN(dataFile, int(fragSize), 
@@ -60,8 +60,8 @@ def main(dataFile, fragSize, epsilon, minPoints, numParts, *args):
         plt.vlines(fragVec[0], fragVec[1][0], fragVec[1][-1], 'k', 'dashdot', 
             linewidths = 0.1) 
         for i,key in enumerate(defCluster):
-                ax.scatter([p[0] for p in defCluster[i].points], [p[1] for p in 
-                    defCluster[i].points], color=colours[i], s=1)
+                ax.scatter([p[0] for p in defCluster[i]], [p[1] for p 
+                    in defCluster[i]], color=colours[i], s=1)
         plt.savefig('clusters.png')
         plt.close()
     elif len(args) > 0 and args[0] == '3D':
@@ -79,16 +79,18 @@ def main(dataFile, fragSize, epsilon, minPoints, numParts, *args):
         ax = fig.add_subplot(111, projection='3d')
         for c in defCluster:
                 ax.scatter([p[0] for p in defCluster[c]], [p[1] for p in 
-                    defCluster[c]], [p[2] for p in defCluster[c]], color=colours
-                    [c], s=1)
+                    defCluster[c]], [p[2] for p in defCluster[c]], 
+                    color=colours[c], s=1)
         plt.show()
     f = open('outDBSCAN.txt', 'w')
     for num,lista in enumerate(defCluster):
         f.write('Cluster ' + str(num) + ':\n')
-        for point in defCluster[num].points:
+#        for point in defCluster[num].points:
+        for point in lista:
                 f.write(str(point) + '\n')	
     f.close()
     
 if __name__=='__main__':
     fragSize = 3
-    main(sys.argv[1], fragSize, float(sys.argv[2]), int(sys.argv[3]),                   sys.argv[4], sys.argv[5] if len(sys.argv) >= 6 else 0)
+    main(sys.argv[1], fragSize, float(sys.argv[2]), int(sys.argv[3]),
+        sys.argv[4], sys.argv[5] if len(sys.argv) >= 6 else 0)

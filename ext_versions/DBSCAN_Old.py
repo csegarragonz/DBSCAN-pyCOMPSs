@@ -80,163 +80,6 @@ def partition_space(dataset, fragSize, epsilon):
         rangeToEps[square] = tmp
     return (fragData, fragVec, rangeToEps)
 
-@task(clusters = INOUT) 
-def merge_cluster(clusters, corePoints, square, epsilon):
-    """
-    Given a list of core points, decides wether each core point forms a 
-    new cluster or belongs to an existing one.
-    :inout clusters:    list of clusters found.
-    :param corePoints:   list of all the core points found in square.
-    :param square:     working square.
-    :param epsilon:    input parameter.
-    """
-    for point in corePoints:
-        possibleClusters = []
-        for clust in clusters:
-            for clustP in clust.points:
-                if np.linalg.norm(point-clustP) < epsilon:
-                    possibleClusters.append(clust)
-                    if len(possibleClusters) > 1:
-                        clusters.remove(clust)
-                    break
-        if len(possibleClusters) > 0:
-            master=possibleClusters.pop(0)
-            master.addPoint(point)
-            for slave in possibleClusters:
-                master.merge(slave)
-        else:
-            #Class Cluster is defined at /classes/cluster.py
-            tmp = ([point],[square])
-            tmpc = Cluster()
-            tmpc.add(*tmp)
-            clusters.append(tmpc)
-
-def DBSCAN(dataFile, fragSize, epsilon, minPoints, numParts):
-    """
-    Main DBSCAN algorithm.
-    :param dataFile: file where the data is stored.
-    :param fragSize: size used for space partition.
-    :param epsilon: maximum distance for two points to be considered 
-    neighbours.
-    :param minPoints: minimum number of neighbours for a point to be 
-    considered core point.
-    :param numParts: number of parts in which fragData is divided for 
-    processing.
-    :return defClusters: result of the application, dict where values 
-    are points corresponding to the <key> cluster.
-    """
-    start = time.time()
-    print "Density Based Scan started."
-    normData = normalize_data(dataFile) 
-    print "Normalize data: " + str(normData)
-    dataset = np.loadtxt(normData)
-    print "Dataset: " + str(dataset)
-    print "Input Params: " + str(fragSize) + ' , ' + str(epsilon) + ' , '
-        + str(minPoints) + ' , ' + str(numParts)
-    [fragData, fragVec, rangeToEps] = partition_space(dataset, fragSize, 
-        epsilon) 
-    print "Starting partial scan..."
-    clusters = [[[] for _ in range(len(fragData))] for __ in 
-        range(numParts)]
-    corePMatrix = [[[] for _ in range(numParts)] for __ in 
-        range(len(fragData))]
-    for i, (square,value) in enumerate(fragData.viewitems()):
-        partial_scan(corePMatrix[i], square, epsilon, minPoints, fragData,
-            fragSize, numParts, rangeToEps)
-        for j in range(numParts):
-            merge_cluster(clusters[j][i], corePMatrix[i][j], square, 
-                epsilon)
-    clusters = compss_wait_on(clusters)
-    print "Initial Proposal Finished"
-    iniP = time.time()
-    clusters = [clust for rows in clusters for squares in rows for clust 
-        in squares] 
-    print "Length of clusters found: "+str(len(clusters))
-    possibleClusters=sync_clusters(clusters, epsilon, numParts)
-    syncT = time.time()
-    print "Syncing Finished"
-    halfDefClusters = update(clusters, possibleClusters, True)
-    updateTime = time.time()
-    defClusters = expandCluster(halfDefClusters, fragData, epsilon, 
-        minPoints, fragSize, numParts, rangeToEps)
-    print "Expansion Finished" 
-    print "DBSCAN Algorithm finished succesfully."
-    end = time.time()
-    print "Exec Times:"
-    print "----------------------------------"
-    print "Initial Proposal Time: \t %.6f" % float(iniP-start)
-    print "Syncing Time: \t \t  %.6f" % float(syncT-iniP)
-    print "Update Time: \t \t  %.6f" % float(updateTime-syncT)
-    print "Expand: \t \t  %.6f" % float(end-updateTime)
-    print "----------------------------------"
-    print "Time elapsed: \t \t  %.6f" % float(end-start)
-    print "Number of clusters found: "+str(len(defClusters))
-    sys.stdout.flush()
-    sys.stderr.flush()
-    return defClusters
-
-def sync_clusters(clusters, epsilon, numParts):
-    """
-    Returns a matrix of booleans. Pos [i,j]=1 <=> clusters -i and -j 
-    should be merged.
-    :inout clusters: list of all clusters and their points.
-    :param numParts: list of clusters to be merged with the general list.
-    :param epsilon: input parameter, maximum distance under which two 
-    points are considered neighbours.
-    :return possibleClusters: result matrix.
-    """
-    possibleClusters = defaultdict(list)
-    n = 10
-    tmpDel = (n - len(clusters) % n) % n
-    if not len(clusters) % n ==0:
-        for i in range(n - len(clusters) % n): clusters.append(Cluster())
-    enable = [[[] for z in range(len(clusters)/n)] for w in 
-        range(len(clusters)/n)]
-    for i in range(len(clusters)/n):
-        tmp1 = [clusters[n*i + k].points for k in range(n)]
-        for j in range(len(clusters)/n):
-            tmp2=[clusters[n*j + k].points for k in range(n)]
-            sync_task(enable[i][j], tmp1, tmp2, epsilon)
-    a = time.time()
-    enable = compss_wait_on(enable)
-    print "Long Wait on Time: %.6f" % float(time.time()-a)
-    for i in range(len(clusters)/n): 
-        for j in range(len(clusters)/n):
-            for k in range(n):
-                for l in range(n):
-                    if enable[i][j][n*k +l]: 
-                        possibleClusters[i*n+k].append(j*n+l)
-    l = len(clusters)
-    for i in range(tmpDel):
-        possibleClusters.pop(l-1-i, None)
-        clusters.pop()    
-    return possibleClusters
-
-def my_any(m):
-    """
-    Checks wether a 2-D matrix contains a True value.
-    """
-    if j[0]:
-                return True
-    return False
-
-@task(enable = INOUT)
-def sync_task(enable, hosts, visits, epsilon):
-    """
-    Given two lists, checks wether the distance between the two sets is 
-    less than epsilon.
-    """
-    for host in hosts:
-        for visit in visits:
-            for p in host:
-                for point in visit:
-                    if np.linalg.norm(point-p) < epsilon:
-                        enable.append(1)
-                        break
-                else: continue
-                break   
-            else: enable.append(0)
-
 def partial_scan(corePoints, square, epsilon, minPoints, fragData, 
                 fragSize, numParts, rangeToEps):
     """
@@ -281,7 +124,120 @@ def scan_task(corePoints, pointSet, pointSetReal, epsilon, minPoints):
                     corePoints.append(point)
                     break  
 
-def expandCluster(clusters, fragData, epsilon, minPoints, fragSize, numParts, rangeToEps):
+@task(clusters = INOUT) 
+def merge_cluster(clusters, corePoints, square, epsilon):
+    """
+    Given a list of core points, decides wether each core point forms a 
+    new cluster or belongs to an existing one.
+    :inout clusters:    list of clusters found.
+    :param corePoints:   list of all the core points found in square.
+    :param square:     working square.
+    :param epsilon:    input parameter.
+    """
+    for point in corePoints:
+        possibleClusters = []
+        for clust in clusters:
+            for clustP in clust.points:
+                if np.linalg.norm(point-clustP) < epsilon:
+                    possibleClusters.append(clust)
+                    if len(possibleClusters) > 1:
+                        clusters.remove(clust)
+                    break
+        if len(possibleClusters) > 0:
+            master = possibleClusters.pop(0)
+            master.addPoint(point)
+            for slave in possibleClusters:
+                master.merge(slave)
+        else:
+            #Class Cluster is defined at /classes/cluster.py
+            tmp = ([point],[square])
+            tmpc = Cluster()
+            tmpc.add(*tmp)
+            clusters.append(tmpc)
+
+def sync_clusters(clusters, epsilon, numParts):
+    """
+    Returns a matrix of booleans. Pos [i,j]=1 <=> clusters -i and -j 
+    should be merged.
+    :inout clusters: list of all clusters and their points.
+    :param numParts: list of clusters to be merged with the general list.
+    :param epsilon: input parameter, maximum distance under which two 
+    points are considered neighbours.
+    :return possibleClusters: result matrix.
+    """
+    possibleClusters = defaultdict(list)
+    n = 10
+    tmpDel = (n - len(clusters) % n) % n
+    if not len(clusters) % n ==0:
+        for i in range(n - len(clusters) % n): clusters.append(Cluster())
+    enable = [[[] for z in range(len(clusters)/n)] for w in 
+        range(len(clusters)/n)]
+    for i in range(len(clusters)/n):
+        tmp1 = [clusters[n*i + k].points for k in range(n)]
+        for j in range(len(clusters)/n):
+            tmp2=[clusters[n*j + k].points for k in range(n)]
+            sync_task(enable[i][j], tmp1, tmp2, epsilon)
+    a = time.time()
+    enable = compss_wait_on(enable)
+    print "Long Wait on Time: %.6f" % float(time.time()-a)
+    for i in range(len(clusters)/n): 
+        for j in range(len(clusters)/n):
+            for k in range(n):
+                for l in range(n):
+                    if enable[i][j][n*k +l]: 
+                        possibleClusters[i*n+k].append(j*n+l)
+    l = len(clusters)
+    for i in range(tmpDel):
+        possibleClusters.pop(l-1-i, None)
+        clusters.pop()    
+    return possibleClusters
+
+@task(enable = INOUT)
+def sync_task(enable, hosts, visits, epsilon):
+    """
+    Given two lists, checks wether the distance between the two sets is 
+    less than epsilon.
+    """
+    for host in hosts:
+        for visit in visits:
+            for p in host:
+                for point in visit:
+                    if np.linalg.norm(point-p) < epsilon:
+                        enable.append(1)
+                        break
+                else: continue
+                break   
+            else: enable.append(0)
+
+def update(clusters, possibleClusters, returnCluster):
+    """
+    Given a list of clusters, it reassigns each point to a cluster making
+    sure a point does not appear in more than one different clusters. If 
+    so, those clusters will be merged.
+    :param clusters: provisional cluster list result of the cluster 
+    expansion.
+    :return defClusters: final cluster list.
+    """
+    MF_set = DisjointSet(range(len(clusters)))
+    for i in possibleClusters:
+        for j in range(len(possibleClusters[i])-1):
+            MF_set.union(possibleClusters[i][j], possibleClusters[i][j+1])
+    a = MF_set.get()
+    if returnCluster:
+        defCluster = [Cluster() for _ in range(len(a))]
+        for i,lst in enumerate(a):
+            for elem in lst:
+                defCluster[i].merge(clusters[elem])
+        return defCluster
+    defCluster = [[] for _ in range(len(a))]
+    for i,lst in enumerate(a):
+        for elem in lst:
+            for point in clusters[elem].points:
+                defCluster[i].append(point)
+    return defCluster
+
+def expand_cluster(clusters, fragData, epsilon, minPoints, fragSize, 
+                    numParts, rangeToEps):
     """
     Expands all clusters contained in a list of clusters. Expansion means
     adding non-core points to the 
@@ -350,29 +306,63 @@ def neigh_expansion(clustPoints, clust, fragData, fragSize, rangeToEps,
                 clustPoints.append(point)
                 break
 
-def update(clusters, possibleClusters, returnCluster):
+def DBSCAN(dataFile, fragSize, epsilon, minPoints, numParts):
     """
-    Given a list of clusters, it reassigns each point to a cluster making
-    sure a point does not appear in more than one different clusters. If 
-    so, those clusters will be merged.
-    :param clusters: provisional cluster list result of the cluster 
-    expansion.
-    :return defClusters: final cluster list.
+    Main DBSCAN algorithm.
+    :param dataFile: file where the data is stored.
+    :param fragSize: size used for space partition.
+    :param epsilon: maximum distance for two points to be considered 
+    neighbours.
+    :param minPoints: minimum number of neighbours for a point to be 
+    considered core point.
+    :param numParts: number of parts in which fragData is divided for 
+    processing.
+    :return defClusters: result of the application, dict where values 
+    are points corresponding to the <key> cluster.
     """
-    MF_set = DisjointSet(range(len(clusters)))
-    for i in possibleClusters:
-        for j in range(len(possibleClusters[i])-1):
-            MF_set.union(possibleClusters[i][j], possibleClusters[i][j+1])
-    a = MF_set.get()
-    if returnCluster:
-        defCluster = [Cluster() for _ in range(len(a))]
-        for i,lst in enumerate(a):
-            for elem in lst:
-                defCluster[i].merge(clusters[elem])
-        return defCluster
-    defCluster = [[] for _ in range(len(a))]
-    for i,lst in enumerate(a):
-        for elem in lst:
-            for point in clusters[elem].points:
-                defCluster[i].append(point)
-    return defCluster
+    start = time.time()
+    print "Density Based Scan started."
+    normData = normalize_data(dataFile) 
+    print "Normalize data: " + str(normData)
+    dataset = np.loadtxt(normData)
+    [fragData, fragVec, rangeToEps] = partition_space(dataset, fragSize, 
+        epsilon) 
+    print "Starting partial scan..."
+    clusters = [[[] for _ in range(len(fragData))] for __ in 
+        range(numParts)]
+    corePMatrix = [[[] for _ in range(numParts)] for __ in 
+        range(len(fragData))]
+    for i, (square,value) in enumerate(fragData.viewitems()):
+        partial_scan(corePMatrix[i], square, epsilon, minPoints, fragData,
+            fragSize, numParts, rangeToEps)
+        for j in range(numParts):
+            merge_cluster(clusters[j][i], corePMatrix[i][j], square, 
+                epsilon)
+    clusters = compss_wait_on(clusters)
+    print "Initial Proposal Finished"
+    iniP = time.time()
+    clusters = [clust for rows in clusters for squares in rows for clust 
+        in squares] 
+    print "Length of clusters found: "+str(len(clusters))
+    possibleClusters = sync_clusters(clusters, epsilon, numParts)
+    syncT = time.time()
+    print "Syncing Finished"
+    halfDefClusters = update(clusters, possibleClusters, True)
+    updateTime = time.time()
+    defClusters = expand_cluster(halfDefClusters, fragData, epsilon, 
+        minPoints, fragSize, numParts, rangeToEps)
+    print "Expansion Finished" 
+    print "DBSCAN Algorithm finished succesfully."
+    end = time.time()
+    print "Exec Times:"
+    print "----------------------------------"
+    print "Initial Proposal Time: \t %.6f" % float(iniP-start)
+    print "Syncing Time: \t \t  %.6f" % float(syncT-iniP)
+    print "Update Time: \t \t  %.6f" % float(updateTime-syncT)
+    print "Expand: \t \t  %.6f" % float(end-updateTime)
+    print "----------------------------------"
+    print "Time elapsed: \t \t  %.6f" % float(end-start)
+    print "Number of clusters found: "+str(len(defClusters))
+    sys.stdout.flush()
+    sys.stderr.flush()
+    return [defClusters, fragVec]
