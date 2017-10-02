@@ -34,54 +34,24 @@ def normalize_data(data_file):
     np.savetxt(new_name,norm_data)
     return new_name
 
-def partition_space(dataset, fragSize, epsilon):
+@task(data_pos = INOUT)
+def init_data(data_pos, square, num_points):
     """
-    Returns: 
-    :returns fragData: dict with (key,value)=(spatial id, points in the 
-    region).
-    :returns rangeToEps: list with the number of squares to check to 
-    preserve eps distance to all points along each dim.
-    fragVec begins at 0
+    FOR THE MOMENT IT ONLY WORKS IN A  10x10 MATRIX
+    Initializes random generated data? in the given square.
+    :inout data_pos: pointer to the square in the grid where points will be 
+    stored.
+    :param square: indications to the given square to generate data belonging
+    only to this square. Square is an int and each number from right to left 
+    denotes the cell number along that dimension (dim_n-1 dim_n-2 ... dim 0) 
     """
-    fragData = defaultdict(list)
-    rangeToEps = defaultdict(list)
-    dim = len(dataset[0])
-    fragVec = [[np.max(np.min(dataset, axis=0)[i] - epsilon,0),
-        np.mean(dataset, axis = 0)[i], np.max(dataset, axis=0)[i]] 
-        for i in range(dim)]
-    size = pow(10, len(str(fragSize + 1)))
+    dim=len(str(square))
+    data_pos = np.random.sample([num_points, dim])
     for i in range(dim):
-        for j in range(fragSize):
-            tmpPoint = defaultdict(int)
-            for point in dataset:
-                k = 0
-                while point[i]>fragVec[i][k]: k += 1
-                tmpPoint[k] += 1        
-            ind = max(tmpPoint.iterkeys(), key=(lambda key: 
-                tmpPoint[key]))
-            val = float((fragVec[i][ind-1] + fragVec[i][ind])/2)
-            fragVec[i].insert(ind, val)
-    for point in dataset:
-        key = 0
-        for i in range(dim):
-            k = 0
-            while point[i]>fragVec[i][k]: k += 1
-            key += (k-1)*pow(size,i)        
-        fragData[key].append(point)
-    for square in fragData:
-        tmp = []
-        for i in range(dim):
-            pos = square % size
-            a = [[j,x-fragVec[i][pos]] for j,x in enumerate(fragVec[i]) 
-                if abs(x - fragVec[i][pos]) < epsilon]
-            b = [[j,x-fragVec[i][pos+1]] for j,x in enumerate(fragVec[i])
-                if abs(x - fragVec[i][pos+1]) < epsilon]
-            maxa = abs(max(a, key=lambda x: x[1])[0] - pos)
-            maxb = abs(max(b, key=lambda x: x[1])[0] - pos)
-            tmp.append(max(maxa, maxb, 1)) 
-            pos = pos/size
-        rangeToEps[square] = tmp
-    return (fragData, fragVec, rangeToEps)
+        pos_ind = square%10
+        data_pos[:,i] = data_pos[:,i]/10 + float(pos_ind)/10 
+        square = square/10 
+    
 
 def partial_scan(corePoints, square, epsilon, minPoints, fragData, 
                 fragSize, numParts, rangeToEps):
@@ -324,12 +294,18 @@ def DBSCAN(data_file, fragSize, epsilon, minPoints, numParts):
     are points corresponding to the <key> cluster.
     """
     start = time.time()
-    print "Density Based Scan started."
-    norm_data = normalize_data(data_file) 
-    print "Normalize data: " + str(normData)
-    dataset = np.loadtxt(norm_data)
-    [fragData, fragVec, rangeToEps] = partition_space(dataset, fragSize, 
-        epsilon) 
+    #This variables are currently hardcoded
+    num_grid_rows = 10
+    num_grid_cols = 10
+    num_points = 100
+    dim = 2
+    dataset = np.empty([num_grid_rows, num_grid_cols, num_points, dim])
+    for i in range(num_grid_rows):
+        for j in range(num_grid_cols):
+            #This ONLY WORKS IN 2D
+            square = i + 10*j
+            dataset[i][j] = init_data(dataset[i][j], square, num_points)  
+
     print "Starting partial scan..."
     clusters = [[[] for _ in range(len(fragData))] for __ in 
         range(numParts)]
