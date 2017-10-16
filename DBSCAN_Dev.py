@@ -52,20 +52,24 @@ def consume_data(dataset, filename):
     return dataset
 
 #@task(data_pos = INOUT)
-def init_data(data_pos, square, num_points):
-    """
-    FOR THE MOMENT IT ONLY WORKS IN A  10x10 MATRIX
-    Initializes random generated data? in the given square.
-    :inout data_pos: pointer to the square in the grid where points will be 
-    stored.
-    :param square: indications to the given square to generate data belonging
-    only to this square. Square is an int and each number from right to left 
-    denotes the cell number along that dimension (dim_n-1 dim_n-2 ... dim 0) 
-    """
-    dim=len(square)
-    data_pos = np.random.sample([num_points, dim])
-    for i in range(dim):
-        data_pos[:,i] = data_pos[:,i]/10 + float(square[i])/10 
+def init_data(data_pos, square, num_points_max, means, std):
+#    dim=len(square)
+#    data_pos = np.random.sample([num_points, dim])
+#    for i in range(dim):
+#        data_pos[:,i] = data_pos[:,i]/10 + float(square[i])/10 
+    import scipy.stats as stats
+    #This should change if more than 2 features are desired
+    for i in range(len(means)):
+        for j in range(num_points_max):
+            tmp = np.random.multivariate_normal(means[i], std[i], size = (1))
+            for k in range(len(square)):
+                if (tmp[0][k] <= float(square[k])/10 or 
+                        tmp[0][k] > float(square[k] + 1)/10):
+                    break
+            else:
+                data_pos.append(tmp)        
+    if len(data_pos) > 0:
+        data_pos = np.vstack(data_pos)
     #DELETE
     return data_pos
 
@@ -232,45 +236,50 @@ def DBSCAN(epsilon, min_points):
     #This variables are currently hardcoded
     num_grid_rows = 10
     num_grid_cols = 10
-    num_points = 5
+    num_points_max = 200
     dim = 2
+    centers = [[0.2, 0.3], [0.6, 0.7]]
+    std = [[[0.01, 0], [0, 0.01]], [[0.01, 0], [0, 0.01]]]
     dataset = [[[] for _ in range(num_grid_cols)] for __ in
         range(num_grid_rows)]
-#    dataset = np.empty([num_grid_rows, num_grid_cols, num_points, dim])
-#    for i in range(num_grid_rows):
-#        for j in range(num_grid_cols):
-            #This ONLY WORKS IN 2D
-            #init_data(dataset[i][j], [i,j], num_points)  
-            #DELETE
-#            dataset[i][j] = init_data(dataset[i][j], [i,j], num_points)  
-    dataset = consume_data(dataset, "./data/blobs_0to1.txt")
-    clusters = [[[] for _ in range(num_grid_cols)] for __ in 
-        range(num_grid_rows)]
-    core_points = [[[] for _ in range(num_grid_cols)] for __ in 
-        range(num_grid_rows)]
-    adj_mat = [[[] for _ in range(num_grid_cols)] for __ in 
-        range(num_grid_rows)]
+    #dataset = np.empty([num_grid_rows, num_grid_cols, num_points, dim])
     for i in range(num_grid_rows):
         for j in range(num_grid_cols):
-            neigh_sq_coord = neigh_squares_query([i,j], epsilon)
-            neigh_squares = []
-            for coord in neigh_sq_coord:
-                neigh_squares.append(dataset[coord[0]][coord[1]])
-#            partial_scan(dataset[i][j], core_points[i][j], epsilon, min_points,
-##                 *neigh_squares) 
-##            merge_cluster(clusters[i][j], core_points[i][j], epsilon)
-            #DELETE
-            core_points[i][j] = partial_scan(dataset[i][j], core_points[i][j], epsilon, min_points,
-                 *neigh_squares) 
-            clusters[i][j] = merge_cluster(clusters[i][j], core_points[i][j], epsilon)
-            neigh_clusters = []
-            for coord in neigh_sq_coord:
-                neigh_clusters.append([clusters[coord[0]][coord[1]], coord])
-            adj_mat[i][j] = sync_clusters(clusters[i][j], adj_mat[i][j], epsilon, 
-                *neigh_clusters) 
-##    adj_mat = compss_wait_on(adj_mat)
-    link_list = unwrap_adj_mat(adj_mat)
-    link_list = update(link_list)
-
-    #What to do with the output?
-    return link_list
+           #This ONLY WORKS IN 2D
+           #init_data(dataset[i][j], [i,j], num_points)  
+           #DELETE
+            dataset[i][j] = init_data(dataset[i][j], [i,j], num_points_max, 
+                centers, std)
+            print "Square: " + str(i)+str(j)
+            print dataset[i][j]
+##    dataset = consume_data(dataset, "./data/blobs_0to1.txt")
+#    clusters = [[[] for _ in range(num_grid_cols)] for __ in 
+#        range(num_grid_rows)]
+#    core_points = [[[] for _ in range(num_grid_cols)] for __ in 
+#        range(num_grid_rows)]
+#    adj_mat = [[[] for _ in range(num_grid_cols)] for __ in 
+#        range(num_grid_rows)]
+#    for i in range(num_grid_rows):
+#        for j in range(num_grid_cols):
+#            neigh_sq_coord = neigh_squares_query([i,j], epsilon)
+#            neigh_squares = []
+#            for coord in neigh_sq_coord:
+#                neigh_squares.append(dataset[coord[0]][coord[1]])
+##            partial_scan(dataset[i][j], core_points[i][j], epsilon, min_points,
+###                 *neigh_squares) 
+###            merge_cluster(clusters[i][j], core_points[i][j], epsilon)
+#            #DELETE
+#            core_points[i][j] = partial_scan(dataset[i][j], core_points[i][j], epsilon, min_points,
+#                 *neigh_squares) 
+#            clusters[i][j] = merge_cluster(clusters[i][j], core_points[i][j], epsilon)
+#            neigh_clusters = []
+#            for coord in neigh_sq_coord:
+#                neigh_clusters.append([clusters[coord[0]][coord[1]], coord])
+#            adj_mat[i][j] = sync_clusters(clusters[i][j], adj_mat[i][j], epsilon, 
+#                *neigh_clusters) 
+###    adj_mat = compss_wait_on(adj_mat)
+#    link_list = unwrap_adj_mat(adj_mat)
+#    link_list = update(link_list)
+#
+#    #What to do with the output?
+#    return link_list
