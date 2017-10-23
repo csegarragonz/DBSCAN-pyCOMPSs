@@ -32,54 +32,54 @@ PyCOMPSs Mathematical Library: Clustering: DBSCAN
 
 import sys
 import numpy as np
-import DBSCAN_Old as DBSCAN
+import DBSCAN_Dev as DBSCAN
 
 def main(dataFile, fragSize, epsilon, minPoints, numParts, *args):
-    [defCluster, fragVec] = DBSCAN.DBSCAN(dataFile, int(fragSize), 
+    [defCluster, fragVec] = DBSCAN.DBSCAN(dataFile, int(fragSize),
         float(epsilon),int(minPoints), int(numParts))
     newName = dataFile[dataFile.find('.')+1:dataFile.rfind('.')]
     newName = '.'+newName+'n.txt'
     dataset = np.loadtxt(newName)
     if len(args) > 0 and args[0] == '2D':
         import matplotlib.pyplot as plt
-        from matplotlib import colors	
+        from matplotlib import colors
         fig, ax = plt.subplots()
 #        plt.hlines(fragVec[1],0,1, 'k', 'dashdot', linewidths = 0)
-#        plt.vlines(fragVec[0],0,1, 'k', 'dashdot', linewidths = 0) 
-        plt.hlines(fragVec[1], fragVec[0][0], fragVec[0][-1], 'k', 'dashdot', 
+#        plt.vlines(fragVec[0],0,1, 'k', 'dashdot', linewidths = 0)
+        plt.hlines(fragVec[1], fragVec[0][0], fragVec[0][-1], 'k', 'dashdot',
             linewidths = 0.1)
-        plt.vlines(fragVec[0], fragVec[1][0], fragVec[1][-1], 'k', 'dashdot', 
-            linewidths = 0.1) 
+        plt.vlines(fragVec[0], fragVec[1][0], fragVec[1][-1], 'k', 'dashdot',
+            linewidths = 0.1)
         ax.scatter([p[0] for p in dataset], [p[1] for p in dataset], s = 1)
         plt.savefig('dataset.png')
         plt.close()
         colours = [hex for (name, hex) in colors.cnames.iteritems()]
         fig, ax = plt.subplots()
-        plt.hlines(fragVec[1], fragVec[0][0], fragVec[0][-1], 'k', 'dashdot', 
+        plt.hlines(fragVec[1], fragVec[0][0], fragVec[0][-1], 'k', 'dashdot',
             linewidths = 0.1)
-        plt.vlines(fragVec[0], fragVec[1][0], fragVec[1][-1], 'k', 'dashdot', 
-            linewidths = 0.1) 
+        plt.vlines(fragVec[0], fragVec[1][0], fragVec[1][-1], 'k', 'dashdot',
+            linewidths = 0.1)
         for i,key in enumerate(defCluster):
-                ax.scatter([p[0] for p in defCluster[i]], [p[1] for p 
+                ax.scatter([p[0] for p in defCluster[i]], [p[1] for p
                     in defCluster[i]], color=colours[i], s=1)
         plt.savefig('clusters.png')
         plt.close()
     elif len(args) > 0 and args[0] == '3D':
         import matplotlib.pyplot as plt
-        from matplotlib import colors	
+        from matplotlib import colors
         fig = plt.figure()
         ax = fig.add_subplot(111, projection = '3d')
-        ax.scatter([p[0] for p in dataset], [p[1] for p in dataset], [p[2] for 
+        ax.scatter([p[0] for p in dataset], [p[1] for p in dataset], [p[2] for
             p in dataset], s = 1)
         plt.grid()
         plt.savefig('plot/dataset.png')
         plt.close()
         colours = [hex for (name, hex) in colors.cnames.iteritems()]
-        fig = plt.figure() 
+        fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
         for c in defCluster:
-                ax.scatter([p[0] for p in defCluster[c]], [p[1] for p in 
-                    defCluster[c]], [p[2] for p in defCluster[c]], 
+                ax.scatter([p[0] for p in defCluster[c]], [p[1] for p in
+                    defCluster[c]], [p[2] for p in defCluster[c]],
                     color=colours[c], s=1)
         plt.show()
     f = open('outDBSCAN.txt', 'w')
@@ -87,9 +87,9 @@ def main(dataFile, fragSize, epsilon, minPoints, numParts, *args):
         f.write('Cluster ' + str(num) + ':\n')
 #        for point in defCluster[num].points:
         for point in lista:
-                f.write(str(point) + '\n')	
+                f.write(str(point) + '\n')
     f.close()
-    
+
 if __name__=='__main__':
     fragSize = 3
     main(sys.argv[1], fragSize, float(sys.argv[2]), int(sys.argv[3]),
