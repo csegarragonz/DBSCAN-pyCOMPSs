@@ -1,55 +1,52 @@
-#Implement adaptative space partition
-#carlos.segarra @ bsc.es
+# Implement adaptative space partition
+# carlos.segarra @ bsc.es
 
-#Imports
+# Imports
 from pycompss.api.task import task
 from pycompss.api.parameter import *
 from pycompss.api.api import compss_wait_on
 from collections import defaultdict
 from classes.cluster import Cluster
 from classes.DS import DisjointSet
+from classes.Data import Data
 import itertools
 import time
 import numpy as np
 import sys
 import math
-import random
 
 
-@task(data_pos = INOUT)
+@task(data_pos=INOUT)
 def init_data(data_pos, square, num_points_max, means, std):
-#    dim=len(square)
-#    data_pos = np.random.sample([num_points, dim])
-#    for i in range(dim):
-#        data_pos[:,i] = data_pos[:,i]/10 + float(square[i])/10
-    import scipy.stats as stats
     for i in range(len(means)):
         for j in range(num_points_max):
-            tmp = np.random.multivariate_normal(means[i], std[i], size = (1))
+            tmp = np.random.multivariate_normal(means[i], std[i], size=(1))
             for k in range(len(square)):
                 if (tmp[0][k] <= float(square[k])/10 or
                         tmp[0][k] > float(square[k] + 1)/10):
                     break
             else:
-                data_pos.append(tmp)
-    if len(data_pos) > 0:
-        data_pos = np.vstack(data_pos)
-        tmp_vec = -2*np.ones(np.shape(data_pos)[0])
-        data_pos = [data_pos, tmp_vec]
+                data_pos.value.append(tmp)
+    if len(data_pos.value) > 0:
+        data_pos.value = np.vstack(data_pos.value)
+        tmp_vec = -2*np.ones(np.shape(data_pos.value)[0])
+        data_pos.value = [data_pos.value, tmp_vec]
     else:
-        data_pos = np.array([(np.random.uniform(low=0.1, high=0.2),
-            np.random.uniform(low=0.3, high=0.4))])
-        tmp_vec = -2*np.ones(np.shape(data_pos)[0])
-        data_pos = [data_pos, tmp_vec]
-    #DELETE
+        data_pos.value = np.array([(np.random.uniform(low=float(square[0])/10,
+                                    high=float(square[0] + 1)/10),
+                                    np.random.uniform(low=float(square[1]) /
+                                    10, high=float(square[1]+1)/10))])
+        tmp_vec = -2*np.ones(np.shape(data_pos.value)[0])
+        data_pos.value = [data_pos.value, tmp_vec]
 #    return data_pos
 
-#Only works in 2D and 10 squares per side
+# Only works in 2D and 10 squares per side
+
 
 def neigh_squares_query(square, epsilon):
     #This could be modified to include only borders. 0.1 is the side size
     dim = len(square)
-    neigh_squares = []D
+    neigh_squares = []
     border_squares = int(max(epsilon/0.1, 1))
     perm = []
     for i in range(dim):
@@ -63,35 +60,36 @@ def neigh_squares_query(square, epsilon):
             neigh_squares.append(current)
     return neigh_squares
 
-#@task(core_points_list = INOUT)
-@task(returns = int)
-def partial_scan(data, core_points_list, epsilon, min_points, *args):
-    tmp_unwrap = [i[0] for i in args]
-    neigh_points = np.vstack(tmp_unwrap)
-    for num, point in enumerate(data[0]):
-        if np.sum((np.linalg.norm(neigh_points - point, axis = 1) -
-            epsilon) < 0) > min_points:
-            core_points_list.append(point)
-            data[1][num] = -1
-    return 0
-    #DELETE
-    return data
-#    return core_points_list
 
-#@task(clusters = INOUT)
-def merge_cluster(clusters, core_points, epsilon):
-    for point in core_points:
-        for clust in clusters:
-            if np.sum((np.linalg.norm(clust - point, axis = 1) -
-                epsilon) < 0) > 0:
-                clust.append(point)
+@task(data=INOUT)
+def partial_scan(data, core_points_list, epsilon, min_points, *args):
+    tmp_unwrap = [i.value[0] for i in args]
+    neigh_points = np.vstack(tmp_unwrap)
+    for num, point in enumerate(data.value[0]):
+        if np.sum((np.linalg.norm(neigh_points - point, axis=1) -
+                   epsilon) < 0) > min_points:
+            core_points_list.append(point)
+            data.value[1][num] = -1
+#    return data
+
+
+@task(data=INOUT)
+def merge_cluster(data, epsilon):
+    cluster_count = 0
+    core_points = [[num, p] for num, p in enumerate(data.value[0]) if
+                   data.value[1][num] == -1]
+    for pos, point in core_points:
+        tmp_vec = (np.linalg.norm(data.value[0]-point, axis=1) - epsilon) < 0
+        for num, poss_neigh in enumerate(tmp_vec):
+            if poss_neigh and data.value[1][num] > -1:
+                data.value[1][pos] = data.value[1][num]
                 break
         else:
-            clusters.append([point])
-    for num, clust in enumerate(clusters):
-        np.vstack(clust)
-    #DELETE
-    return clusters
+            data.value[1][pos] = cluster_count
+            cluster_count += 1
+    # DELETE
+#    return data
+
 
 #@task(adj_mat = INOUT)
 def sync_clusters(clusters, adj_mat, epsilon, *args):
@@ -109,6 +107,7 @@ def sync_clusters(clusters, adj_mat, epsilon, *args):
                         break
     #DELETE
     return adj_mat
+
 
 def unwrap_adj_mat(adj_mat):
     cardinals = [[len(adj_mat[i][j]) for j in range(len(adj_mat[i]))] for i in
@@ -128,6 +127,7 @@ def unwrap_adj_mat(adj_mat):
                 count += 1
     return links
 
+
 def update(links_list):
     mf_set = DisjointSet(range(len(links_list)))
     for i in links_list:
@@ -135,6 +135,7 @@ def update(links_list):
             mf_set.union(links_list[i][j], links_list[i][j+1])
     final_mf_set = mf_set.get()
     return final_mf_set
+
 
 def expand_cluster(clusters, fragData, epsilon, minPoints, fragSize,
                     numParts, rangeToEps):
@@ -167,6 +168,8 @@ def expand_cluster(clusters, fragData, epsilon, minPoints, fragSize,
     return update(clusters, links, False)
 
 #@task(clustPoints = INOUT)
+
+
 def neigh_expansion(clustPoints, clust, fragData, fragSize, rangeToEps,
                     epsilon):
     """
@@ -206,6 +209,7 @@ def neigh_expansion(clustPoints, clust, fragData, fragSize, rangeToEps,
                 clustPoints.append(point)
                 break
 
+
 def DBSCAN(epsilon, min_points):
     epsilon = float(epsilon)
     min_points = int(min_points)
@@ -213,11 +217,11 @@ def DBSCAN(epsilon, min_points):
     #This variables are currently hardcoded
     num_grid_rows = 10
     num_grid_cols = 10
-    num_points_max = 200
+    num_points_max = 100
     dim = 2
     centers = [[0.2, 0.3], [0.6, 0.7]]
     std = [[[0.01, 0], [0, 0.01]], [[0.01, 0], [0, 0.01]]]
-    dataset = [[[] for _ in range(num_grid_cols)] for __ in
+    dataset = [[Data() for _ in range(num_grid_cols)] for __ in
         range(num_grid_rows)]
     #dataset = np.empty([num_grid_rows, num_grid_cols, num_points, dim])
     for i in range(num_grid_rows):
@@ -225,7 +229,7 @@ def DBSCAN(epsilon, min_points):
            #This ONLY WORKS IN 2D
            #init_data(dataset[i][j], [i,j], num_points)
            #DELETE
-            dataset[i][j] = init_data(dataset[i][j], [i,j], num_points_max,
+           init_data(dataset[i][j], [i,j], num_points_max,
                 centers, std)
     clusters = [[[] for _ in range(num_grid_cols)] for __ in
         range(num_grid_rows)]
@@ -235,18 +239,18 @@ def DBSCAN(epsilon, min_points):
         range(num_grid_rows)]
     for i in range(num_grid_rows):
         for j in range(num_grid_cols):
-            neigh_sq_coord = neigh_squares_query([i,j], epsilon)
+            neigh_sq_coord = neigh_squares_query([i, j], epsilon)
             neigh_squares = []
             for coord in neigh_sq_coord:
                 neigh_squares.append(dataset[coord[0]][coord[1]])
             partial_scan(dataset[i][j], core_points[i][j], epsilon, min_points,
                 *neigh_squares)
-    compss_wait_on(datset)
+            merge_cluster(dataset[i][j],  epsilon)
+    dataset = compss_wait_on(dataset)
     for i in range(num_grid_rows):
         for j in range(num_grid_cols):
             print "Square: "+str(i)+str(j)
-            print dataset[i][j]
-##            merge_cluster(clusters[i][j], core_points[i][j], epsilon)
+            print dataset[i][j].value
             #DELETE
 #            dataset[i][j] = partial_scan(dataset[i][j], core_points[i][j], epsilon, min_points, *neigh_squares)
 #    dataset = consume_data(dataset, "./data/blobs_0to1.txt")
