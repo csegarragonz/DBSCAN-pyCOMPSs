@@ -3,10 +3,12 @@
 
 # Imports
 from pycompss.api.task import task
-from pycompss.api.parameter import *
+# from pycompss.api.parameter import *
+from pycompss.api.parameter import INOUT
 from pycompss.api.api import compss_wait_on
+# from pycompss.api.api import barrier
 from collections import defaultdict
-from classes.cluster import Cluster
+# from classes.cluster import Cluster
 from classes.DS import DisjointSet
 from classes.Data import Data
 import itertools
@@ -40,11 +42,9 @@ def init_data(data_pos, square, num_points_max, means, std):
         data_pos.value = [data_pos.value, tmp_vec]
 #    return data_pos
 
-# Only works in 2D and 10 squares per side
-
 
 def neigh_squares_query(square, epsilon):
-    #This could be modified to include only borders. 0.1 is the side size
+    # This could be modified to include only borders. 0.1 is the side size
     dim = len(square)
     neigh_squares = []
     border_squares = int(max(epsilon/0.1, 1))
@@ -52,7 +52,7 @@ def neigh_squares_query(square, epsilon):
     for i in range(dim):
         perm.append(range(-border_squares, border_squares + 1))
     for comb in itertools.product(*perm):
-        current=[]
+        current = []
         for i in range(dim):
             if square[i] + comb[i] in range(10):
                 current.append(square[i]+comb[i])
@@ -73,7 +73,7 @@ def partial_scan(data, core_points_list, epsilon, min_points, *args):
 #    return data
 
 
-@task(data=INOUT)
+@task(data=INOUT, returns=int)
 def merge_cluster(data, epsilon):
     cluster_count = 0
     core_points = [[num, p] for num, p in enumerate(data.value[0]) if
@@ -87,26 +87,30 @@ def merge_cluster(data, epsilon):
         else:
             data.value[1][pos] = cluster_count
             cluster_count += 1
-    # DELETE
-#    return data
+    return [cluster_count]
+#    return data, [cluster_count]
 
 
-#@task(adj_mat = INOUT)
-def sync_clusters(clusters, adj_mat, epsilon, *args):
-    adj_mat = [[] for _ in range(len(clusters))]
-    for num1, clust in enumerate(clusters):
-        for neigh_with_coord in args:
-            neigh_clusters = neigh_with_coord[0]
-            neigh_coord = neigh_with_coord[1]
-            for num2, neigh_clust in enumerate(neigh_clusters):
-                for point in clust:
-                    if np.sum((np.linalg.norm(neigh_clust - point, axis = 1) -
-                        epsilon) < 0) > 0:
-                        adj_mat[num1].append([neigh_coord[0], neigh_coord[1],
-                            num2])
-                        break
-    #DELETE
-    return adj_mat
+@task(adj_mat=INOUT)
+def sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc, *args):
+#    adj_mat = [[] for _ in range(max(adj_mat[0], 1))]
+    nice_args = [[args[i], neigh_sq_loc[i]] for i in range(len(neigh_sq_loc))]
+    nice_args.append([data, coord])
+    for num1, point1 in enumerate(data.value[0]):
+        current_clust_id = int(data.value[1][num1])
+        if current_clust_id > -1:
+            for tmp2, loc2 in nice_args:
+                tmp_vec = (np.linalg.norm(tmp2.value[0]-point1, axis=1) -
+                           epsilon) < 0
+                for num2, poss_neigh in enumerate(tmp_vec):
+                    if poss_neigh:
+                        clust_ind = int(tmp2.value[1][num2])
+                        adj_mat_elem = [loc2, clust_ind]
+                        if (clust_ind > -1) and (adj_mat_elem not in
+                                                 adj_mat[current_clust_id]):
+                            adj_mat[current_clust_id].append(adj_mat_elem)
+                            print adj_mat
+#    return adj_mat
 
 
 def unwrap_adj_mat(adj_mat):
@@ -167,7 +171,7 @@ def expand_cluster(clusters, fragData, epsilon, minPoints, fragSize,
                 clusters[i].addPoint(p)
     return update(clusters, links, False)
 
-#@task(clustPoints = INOUT)
+##@task(clustPoints = INOUT)
 
 
 def neigh_expansion(clustPoints, clust, fragData, fragSize, rangeToEps,
@@ -214,7 +218,7 @@ def DBSCAN(epsilon, min_points):
     epsilon = float(epsilon)
     min_points = int(min_points)
     start = time.time()
-    #This variables are currently hardcoded
+    # This variables are currently hardcoded
     num_grid_rows = 10
     num_grid_cols = 10
     num_points_max = 100
@@ -222,21 +226,18 @@ def DBSCAN(epsilon, min_points):
     centers = [[0.2, 0.3], [0.6, 0.7]]
     std = [[[0.01, 0], [0, 0.01]], [[0.01, 0], [0, 0.01]]]
     dataset = [[Data() for _ in range(num_grid_cols)] for __ in
-        range(num_grid_rows)]
-    #dataset = np.empty([num_grid_rows, num_grid_cols, num_points, dim])
+               range(num_grid_rows)]
     for i in range(num_grid_rows):
         for j in range(num_grid_cols):
-           #This ONLY WORKS IN 2D
-           #init_data(dataset[i][j], [i,j], num_points)
-           #DELETE
-           init_data(dataset[i][j], [i,j], num_points_max,
-                centers, std)
+            # This ONLY WORKS IN 2D
+            init_data(dataset[i][j], [i, j], num_points_max,
+                      centers, std)
     clusters = [[[] for _ in range(num_grid_cols)] for __ in
-        range(num_grid_rows)]
+                range(num_grid_rows)]
     core_points = [[[] for _ in range(num_grid_cols)] for __ in
-        range(num_grid_rows)]
+                   range(num_grid_rows)]
     adj_mat = [[[] for _ in range(num_grid_cols)] for __ in
-        range(num_grid_rows)]
+               range(num_grid_rows)]
     for i in range(num_grid_rows):
         for j in range(num_grid_cols):
             neigh_sq_coord = neigh_squares_query([i, j], epsilon)
@@ -244,18 +245,22 @@ def DBSCAN(epsilon, min_points):
             for coord in neigh_sq_coord:
                 neigh_squares.append(dataset[coord[0]][coord[1]])
             partial_scan(dataset[i][j], core_points[i][j], epsilon, min_points,
-                *neigh_squares)
-            merge_cluster(dataset[i][j],  epsilon)
-    dataset = compss_wait_on(dataset)
+                         *neigh_squares)
+            adj_mat[i][j] = merge_cluster(dataset[i][j],  epsilon)
+    adj_mat = compss_wait_on(adj_mat)
     for i in range(num_grid_rows):
         for j in range(num_grid_cols):
-            print "Square: "+str(i)+str(j)
-            print dataset[i][j].value
-            #DELETE
-#            dataset[i][j] = partial_scan(dataset[i][j], core_points[i][j], epsilon, min_points, *neigh_squares)
-#    dataset = consume_data(dataset, "./data/blobs_0to1.txt")
-#            clusters[i][j] = merge_cluster(clusters[i][j], core_points[i][j], epsilon)
-#            neigh_clusters = []
+            adj_mat[i][j] = [[] for _ in range(max(adj_mat[i][j][0], 1))]
+            neigh_sq_coord = neigh_squares_query([i, j], epsilon)
+            neigh_squares = []
+            neigh_squares_loc = []
+            for coord in neigh_sq_coord:
+                neigh_squares_loc.append([coord[0], coord[1]])
+                neigh_squares.append(dataset[coord[0]][coord[1]])
+            sync_clusters(dataset[i][j], adj_mat[i][j], epsilon, [i,j],
+                          neigh_squares_loc,  *neigh_squares)
+    adj_mat = compss_wait_on(adj_mat)
+    print adj_mat
 #            for coord in neigh_sq_coord:
 #                neigh_clusters.append([clusters[coord[0]][coord[1]], coord])
 #            adj_mat[i][j] = sync_clusters(clusters[i][j], adj_mat[i][j], epsilon,
@@ -263,10 +268,16 @@ def DBSCAN(epsilon, min_points):
 ###    adj_mat = compss_wait_on(adj_mat)
 #    link_list = unwrap_adj_mat(adj_mat)
 #    link_list = update(link_list)
+#    dataset = compss_wait_on(dataset)
+#    for i in range(num_grid_rows):
+#        for j in range(num_grid_cols):
+#            print "Square: "+str(i)+str(j)
+#            print dataset[i][j].value
 #
 #    #What to do with the output?
 #    return link_list
     return 1
+
 
 if __name__ == "__main__":
     DBSCAN(float(sys.argv[1]), int(sys.argv[2]))

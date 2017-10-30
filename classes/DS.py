@@ -22,13 +22,21 @@ PyCOMPSs Mathematical Library: Clustering: DBSCAN
     from: https://github.com/imressed/python-disjoint-set
 """
 
+
 class DisjointSet:
     _disjoint_set = list()
 
+#    def __init__(self, init_arr):
+#        self._disjoint_set = []
+#        if init_arr:
+#            for item in list(set(init_arr)):
+#                self._disjoint_set.append([item])
+
+# Alternative __init__:
     def __init__(self, init_arr):
         self._disjoint_set = []
         if init_arr:
-            for item in list(set(init_arr)):
+            for item in list(init_arr):
                 self._disjoint_set.append([item])
 
     def _find_index(self, elem):
@@ -42,14 +50,14 @@ class DisjointSet:
             if elem in item:
                 return self._disjoint_set[self._disjoint_set.index(item)]
         return None
-    
-    def union(self,elem1, elem2):
+
+    def union(self, elem1, elem2):
         index_elem1 = self._find_index(elem1)
         index_elem2 = self._find_index(elem2)
         if index_elem1 != index_elem2 and index_elem1 is not None and index_elem2 is not None:
-            self._disjoint_set[index_elem2] = self._disjoint_set[index_elem2] +                                     self._disjoint_set[index_elem1]
+            self._disjoint_set[index_elem2] = self._disjoint_set[index_elem2] + self._disjoint_set[index_elem1]
             del self._disjoint_set[index_elem1]
         return self._disjoint_set
-        
+
     def get(self):
         return self._disjoint_set
