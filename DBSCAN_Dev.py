@@ -113,26 +113,24 @@ def sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc, *args):
 #    return adj_mat
 
 
-def unwrap_adj_mat(adj_mat):
-    cardinals = [[len(adj_mat[i][j]) for j in range(len(adj_mat[i]))] for i in
-        range(len(adj_mat))]
-    cum_sum = np.cumsum(cardinals, axis = 1)
-    for i in range(1, len(cum_sum) - 1):
-        cum_sum[i] += cum_sum[i-1][-1]
-    count = 0
-    links = defaultdict(list)
-    for i in range(len(adj_mat)):
-        for j in range(len(adj_mat[i])):
-            for k in range(len(adj_mat[i][j])):
-                links[count].append(count)
-                for num, l in enumerate(adj_mat[i][j][k]):
-                    clust_id = cum_sum[i][j] + num
-                    links[count].append(clust_id)
-                count += 1
-    return links
+def unwrap_adj_mat(tmp_mat, adj_mat):
+    links_list = []
+    for i in range(len(tmp_mat)):
+        for j in range(len(tmp_mat[i])):
+            for k in range(tmp_mat[i][j][0]):
+                links_list.append([[i, j], k])
+    mf_set = DisjointSet(links_list)
+    for i in adj_mat:
+        for j in i:
+            # For an implementation issue, elements in adj_mat are
+            # wrapped with an extra pair of [], hence the j[0]
+            for k in range(len(j[0])-1):
+                mf_set.union(j[0][k], j[0][k+1])
+    out = mf_set.get()
+    return out
 
 
-def update(links_list):
+def update(links_list, adj_mat):
     mf_set = DisjointSet(range(len(links_list)))
     for i in links_list:
         for j in range(len(links_list[i])-1):
@@ -215,14 +213,14 @@ def neigh_expansion(clustPoints, clust, fragData, fragSize, rangeToEps,
 
 
 def DBSCAN(epsilon, min_points):
+    #   TODO: code from scratch the Disjoint Set
     epsilon = float(epsilon)
     min_points = int(min_points)
-    start = time.time()
+#    start = time.time()
     # This variables are currently hardcoded
     num_grid_rows = 10
     num_grid_cols = 10
     num_points_max = 100
-    dim = 2
     centers = [[0.2, 0.3], [0.6, 0.7]]
     std = [[[0.01, 0], [0, 0.01]], [[0.01, 0], [0, 0.01]]]
     dataset = [[Data() for _ in range(num_grid_cols)] for __ in
@@ -232,8 +230,6 @@ def DBSCAN(epsilon, min_points):
             # This ONLY WORKS IN 2D
             init_data(dataset[i][j], [i, j], num_points_max,
                       centers, std)
-    clusters = [[[] for _ in range(num_grid_cols)] for __ in
-                range(num_grid_rows)]
     core_points = [[[] for _ in range(num_grid_cols)] for __ in
                    range(num_grid_rows)]
     adj_mat = [[[] for _ in range(num_grid_cols)] for __ in
@@ -248,6 +244,8 @@ def DBSCAN(epsilon, min_points):
                          *neigh_squares)
             adj_mat[i][j] = merge_cluster(dataset[i][j],  epsilon)
     adj_mat = compss_wait_on(adj_mat)
+    import copy
+    tmp_mat = copy.deepcopy(adj_mat)
     for i in range(num_grid_rows):
         for j in range(num_grid_cols):
             adj_mat[i][j] = [[] for _ in range(max(adj_mat[i][j][0], 1))]
@@ -257,26 +255,13 @@ def DBSCAN(epsilon, min_points):
             for coord in neigh_sq_coord:
                 neigh_squares_loc.append([coord[0], coord[1]])
                 neigh_squares.append(dataset[coord[0]][coord[1]])
-            sync_clusters(dataset[i][j], adj_mat[i][j], epsilon, [i,j],
+            sync_clusters(dataset[i][j], adj_mat[i][j], epsilon, [i, j],
                           neigh_squares_loc,  *neigh_squares)
     adj_mat = compss_wait_on(adj_mat)
-    print adj_mat
-#            for coord in neigh_sq_coord:
-#                neigh_clusters.append([clusters[coord[0]][coord[1]], coord])
-#            adj_mat[i][j] = sync_clusters(clusters[i][j], adj_mat[i][j], epsilon,
-#                *neigh_clusters)
-###    adj_mat = compss_wait_on(adj_mat)
-#    link_list = unwrap_adj_mat(adj_mat)
-#    link_list = update(link_list)
-#    dataset = compss_wait_on(dataset)
-#    for i in range(num_grid_rows):
-#        for j in range(num_grid_cols):
-#            print "Square: "+str(i)+str(j)
-#            print dataset[i][j].value
-#
-#    #What to do with the output?
-#    return link_list
-    return 1
+    links_list = unwrap_adj_mat(tmp_mat, adj_mat)
+#    links_list = update(links_list, adj_mat)
+    print links_list
+    return links_list
 
 
 if __name__ == "__main__":
