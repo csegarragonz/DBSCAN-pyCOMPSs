@@ -23,7 +23,8 @@
 #python ./launchDBSCAN.py ./data/moons.txt 0.015 10 1 2D
 
 #Local execution: -d for debugging, -t for tracing and -g for the dependency graph.
-runcompss --lang=python -g ./launchDBSCAN.py ./data/ran_data.txt 0.045 10 2 2D
+runcompss --lang=python -d ./DBSCAN_Dev.py 0.1 10
+#python ./DBSCAN_Dev.py 0.05 2
 #runcompss --lang=python ./DBSCAN_Show.py ./data/ran_data.txt 3 0.045 20 4 2D
 
 
