@@ -1,13 +1,12 @@
-# Implement adaptative space partition
+# This version contains cluster labeling and is
+# data transfering aware.
 # carlos.segarra @ bsc.es
 
 # Imports
 from pycompss.api.task import task
 from pycompss.api.parameter import INOUT
 from pycompss.api.api import compss_wait_on
-# from pycompss.api.api import barrier
 from collections import defaultdict
-# from classes.cluster import Cluster
 from classes.DS import DisjointSet
 from classes.Data import Data
 import itertools
@@ -229,7 +228,7 @@ def DBSCAN(epsilon, min_points):
                 neigh_squares.append(dataset[coord[0]][coord[1]])
             expand_cluster(dataset[i][j], epsilon, border_points[i][j],
                            *neigh_squares)
-    print len(links_list)
+    print links_list
     return links_list
 
 
