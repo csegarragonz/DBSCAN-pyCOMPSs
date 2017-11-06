@@ -1,5 +1,4 @@
-# This version contains cluster labeling and is
-# data transfering aware.
+# DBSCAN 4 PyCOMPSs
 # carlos.segarra @ bsc.es
 
 # Imports
