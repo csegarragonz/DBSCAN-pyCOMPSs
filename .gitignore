@@ -4,6 +4,9 @@
 #Ignore the normalized data files
 *n.txt
 
+#Ignore data files
+data/
+
 #Ignore generated outputs
 *.png
 outDBSCAN.txt
