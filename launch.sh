@@ -12,12 +12,6 @@ if [ ! -d $WORK_DIR ]; then
 fi
 
 
-schedulers=(es.bsc.compss.scheduler.fifoScheduler.FIFOScheduler \
-es.bsc.compss.scheduler.lifoScheduler.LIFOScheduler \
-es.bsc.compss.scheduler.loadBalancingScheduler.LoadBalancingScheduler \
-es.bsc.compss.scheduler.fifoDataScheduler.FIFODataScheduler
-) 
-
 enqueue_compss \
     --job_dependency=$1
     --num_nodes=$2
@@ -26,4 +20,5 @@ enqueue_compss \
     --tracing=$5
     --lang=python \
     --worker_working_dir=scratch \
+    --master_working_dir=. \
     $EXEC_FILE $6 $7 $8

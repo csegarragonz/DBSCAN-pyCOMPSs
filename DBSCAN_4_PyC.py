@@ -159,7 +159,7 @@ def expand_cluster(data, epsilon, border_points, *args):
 #    return data
 
 
-def DBSCAN(epsilon, min_points):
+def DBSCAN(epsilon, min_points, file_id):
     #   TODO: code from scratch the Disjoint Set
     #   TODO: comment the code apropriately
     #   TODO: remove all the hardcoded parts add a dim input argument
@@ -232,4 +232,4 @@ def DBSCAN(epsilon, min_points):
 
 
 if __name__ == "__main__":
-    DBSCAN(float(sys.argv[1]), int(sys.argv[2]))
+    DBSCAN(float(sys.argv[1]), int(sys.argv[2]), sys.argv[3])
