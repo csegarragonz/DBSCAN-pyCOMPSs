@@ -8,35 +8,35 @@ from pycompss.api.api import compss_wait_on
 from collections import defaultdict
 from classes.DS import DisjointSet
 from classes.Data import Data
+from ast import literal_eval
 import itertools
 # import time
 import numpy as np
 import sys
-# import math
+import os
+
+
+def tensor_by_tuple(dataset, tupla):
+    for i in tupla:
+        dataset = dataset[i]
+    return dataset
 
 
 @task(data_pos=INOUT)
-def init_data(data_pos, square, num_points_max, means, std):
-    for i in range(len(means)):
-        for j in range(num_points_max):
-            tmp = np.random.multivariate_normal(means[i], std[i], size=(1))
-            for k in range(len(square)):
-                if (tmp[0][k] <= float(square[k])/10 or
-                        tmp[0][k] > float(square[k] + 1)/10):
-                    break
-            else:
-                data_pos.value.append(tmp)
-    if len(data_pos.value) > 0:
-        data_pos.value = np.vstack(data_pos.value)
-        tmp_vec = -2*np.ones(np.shape(data_pos.value)[0])
-        data_pos.value = [data_pos.value, tmp_vec]
-    else:
-        data_pos.value = np.array([(np.random.uniform(low=float(square[0])/10,
-                                    high=float(square[0] + 1)/10),
-                                    np.random.uniform(low=float(square[1]) /
-                                    10, high=float(square[1]+1)/10))])
-        tmp_vec = -2*np.ones(np.shape(data_pos.value)[0])
-        data_pos.value = [data_pos.value, tmp_vec]
+def init_data(data_pos, tupla, file_id):
+#   path = "/gpfs/projects/bsc19/COMPSs_DATASETS/dbscan/"+str(file_count)
+    path = "~/DBSCAN/data/"+str(file_id)
+    path = os.path.expanduser(path)
+    tmp_string = path+"/"+str(tupla[0])
+    for num, j in enumerate(tupla):
+        if num > 0:
+            tmp_string += "_"+str(j)
+    tmp_string += ".txt"
+    data_pos.value = np.loadtxt(tmp_string)
+    if len(np.shape(data_pos.value)) == 1:
+        data_pos.value = np.array([data_pos.value])
+    tmp_vec = -2*np.ones(np.shape(data_pos.value)[0])
+    data_pos.value = [data_pos.value, tmp_vec]
 #    return data_pos
 
 
@@ -164,24 +164,32 @@ def DBSCAN(epsilon, min_points, file_id):
     #   TODO: comment the code apropriately
     #   TODO: remove all the hardcoded parts add a dim input argument
 
-    # Initial Definitions
+    # Initial Definitions (necessary?)
     epsilon = float(epsilon)
     min_points = int(min_points)
-    # This variables are currently hardcoded
-    num_grid_rows = 10
-    num_grid_cols = 10
-    num_points_max = 100
+    dataset_info = "dataset.txt"
 
     # Data inisialitation
-    centers = [[0.2, 0.3], [0.6, 0.7]]
-    std = [[[0.01, 0], [0, 0.01]], [[0.01, 0], [0, 0.01]]]
+    dimensions = []
+    f = open(dataset_info, "r")
+    for line in f:
+        split_line = line.split()
+        if split_line[0] == file_id:
+            dimensions = literal_eval(split_line[1])
+            break
+    num_grid_rows = dimensions[0]
+    num_grid_cols = dimensions[1]
+
     dataset = [[Data() for _ in range(num_grid_cols)] for __ in
                range(num_grid_rows)]
     for i in range(num_grid_rows):
         for j in range(num_grid_cols):
             # This ONLY WORKS IN 2D
-            init_data(dataset[i][j], [i, j], num_points_max,
-                      centers, std)
+            init_data(tensor_by_tuple(dataset, [i, j]), [i, j], file_id)
+    dataset = compss_wait_on(dataset)
+#    for i in range(num_grid_rows):
+#        for j in range(num_grid_cols):
+#            print dataset[i][j].value[0]
 
     # Partial Scan And Initial Cluster merging
     adj_mat = [[[] for _ in range(num_grid_cols)] for __ in
