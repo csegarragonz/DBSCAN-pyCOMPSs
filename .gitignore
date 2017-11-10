@@ -7,6 +7,5 @@
 #Ignore data files
 data/
 
-#Ignore generated outputs
-*.png
-outDBSCAN.txt
+#Ignore random plot folder
+plot/
