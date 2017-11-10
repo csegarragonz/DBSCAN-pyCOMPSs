@@ -16,15 +16,9 @@ import sys
 import os
 
 
-def tensor_by_tuple(dataset, tupla):
-    for i in tupla:
-        dataset = dataset[i]
-    return dataset
-
-
 @task(data_pos=INOUT)
 def init_data(data_pos, tupla, file_id):
-#   path = "/gpfs/projects/bsc19/COMPSs_DATASETS/dbscan/"+str(file_count)
+    # path = "/gpfs/projects/bsc19/COMPSs_DATASETS/dbscan/"+str(file_count)
     path = "~/DBSCAN/data/"+str(file_id)
     path = os.path.expanduser(path)
     tmp_string = path+"/"+str(tupla[0])
@@ -54,8 +48,9 @@ def neigh_squares_query(square, epsilon):
             if square[i] + comb[i] in range(10):
                 current.append(square[i]+comb[i])
         if len(current) == dim and current != square:
-            neigh_squares.append(current)
-    return neigh_squares
+            neigh_squares.append(tuple(current))
+    neigh_squares.append(tuple(square))
+    return tuple(neigh_squares)
 
 
 @task(data=INOUT, returns=defaultdict)
@@ -106,10 +101,15 @@ def merge_cluster(data, epsilon):
 #    return data, [cluster_count]
 
 
+def dict_compss_wait_on(dicc, dimension_perms):
+    for comb in itertools.product(*dimension_perms):
+        dicc[comb] = compss_wait_on(dicc[comb])
+    return dicc
+
+
 @task(adj_mat=INOUT)
 def sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc, *args):
     nice_args = [[args[i], neigh_sq_loc[i]] for i in range(len(neigh_sq_loc))]
-    nice_args.append([data, coord])
     for num1, point1 in enumerate(data.value[0]):
         current_clust_id = int(data.value[1][num1])
         if current_clust_id > -1:
@@ -126,25 +126,23 @@ def sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc, *args):
 #    return adj_mat
 
 
-def unwrap_adj_mat(tmp_mat, adj_mat):
+def unwrap_adj_mat(tmp_mat, adj_mat, neigh_sq_coord, dimension_perms):
     links_list = []
-    for i in range(len(tmp_mat)):
-        for j in range(len(tmp_mat[i])):
-            for k in range(tmp_mat[i][j][0]):
-                links_list.append([[i, j], k])
+    for comb in itertools.product(*dimension_perms):
+        for k in range(tmp_mat[comb][0]):
+            links_list.append([comb, k])
     mf_set = DisjointSet(links_list)
-    for i in adj_mat:
-        for j in i:
+    for comb in itertools.product(*dimension_perms):
             # For an implementation issue, elements in adj_mat are
             # wrapped with an extra pair of [], hence the j[0]
-            for k in range(len(j[0])-1):
-                mf_set.union(j[0][k], j[0][k+1])
+            for k in range(len(adj_mat[comb][0])-1):
+                mf_set.union(adj_mat[comb][0][k], adj_mat[comb][0][k+1])
     out = mf_set.get()
     return out
 
 
 @task(data=INOUT)
-def expand_cluster(data, epsilon, border_points, *args):
+def expand_cluster(data, epsilon, border_points, dimension_perms, *args):
     tmp_unwrap_2 = [i.value[1] for i in args]
     neigh_points_clust = np.concatenate(tmp_unwrap_2)
     for elem in border_points:
@@ -162,7 +160,8 @@ def expand_cluster(data, epsilon, border_points, *args):
 def DBSCAN(epsilon, min_points, file_id):
     #   TODO: code from scratch the Disjoint Set
     #   TODO: comment the code apropriately
-    #   TODO: remove all the hardcoded parts add a dim input argument
+    #   TODO: remove hardcoded 0.1 side length
+    #   TODO: use numpy masks.
 
     # Initial Definitions (necessary?)
     epsilon = float(epsilon)
@@ -177,64 +176,51 @@ def DBSCAN(epsilon, min_points, file_id):
         if split_line[0] == file_id:
             dimensions = literal_eval(split_line[1])
             break
-    num_grid_rows = dimensions[0]
-    num_grid_cols = dimensions[1]
-
-    dataset = [[Data() for _ in range(num_grid_cols)] for __ in
-               range(num_grid_rows)]
-    for i in range(num_grid_rows):
-        for j in range(num_grid_cols):
-            # This ONLY WORKS IN 2D
-            init_data(tensor_by_tuple(dataset, [i, j]), [i, j], file_id)
-    dataset = compss_wait_on(dataset)
-#    for i in range(num_grid_rows):
-#        for j in range(num_grid_cols):
-#            print dataset[i][j].value[0]
+    dimension_perms = [range(i) for i in dimensions]
+    dataset = defaultdict()
+    neigh_sq_coord = defaultdict()
+    for comb in itertools.product(*dimension_perms):
+        dataset[comb] = Data()
+        init_data(dataset[comb], comb, file_id)
+        neigh_sq_coord[comb] = neigh_squares_query(comb, epsilon)
 
     # Partial Scan And Initial Cluster merging
-    adj_mat = [[[] for _ in range(num_grid_cols)] for __ in
-               range(num_grid_rows)]
-    border_points = [[[] for _ in range(num_grid_cols)] for __ in
-                     range(num_grid_rows)]
-    for i in range(num_grid_rows):
-        for j in range(num_grid_cols):
-            neigh_sq_coord = neigh_squares_query([i, j], epsilon)
-            neigh_squares = []
-            for coord in neigh_sq_coord:
-                neigh_squares.append(dataset[coord[0]][coord[1]])
-            # Use border points and adj_mat as INOUT instead of OUT
-            border_points[i][j] = partial_scan(dataset[i][j], epsilon,
-                                               min_points, *neigh_squares)
-            adj_mat[i][j] = merge_cluster(dataset[i][j],  epsilon)
+    adj_mat = defaultdict()
+    border_points = defaultdict()
+    for comb in itertools.product(*dimension_perms):
+        neigh_squares = []
+        for coord in neigh_sq_coord[comb]:
+            neigh_squares.append(dataset[coord])
+        # TODO:Use border points and adj_mat as INOUT instead of OUT
+        border_points[comb] = partial_scan(dataset[comb], epsilon,
+                                           min_points, *neigh_squares)
+        adj_mat[comb] = merge_cluster(dataset[comb],  epsilon)
 
     # Cluster Synchronisation
-    adj_mat = compss_wait_on(adj_mat)
-    border_points = compss_wait_on(border_points)
+    adj_mat = dict_compss_wait_on(adj_mat, dimension_perms)
+    border_points = dict_compss_wait_on(border_points, dimension_perms)
     import copy
     tmp_mat = copy.deepcopy(adj_mat)
-    for i in range(num_grid_rows):
-        for j in range(num_grid_cols):
-            adj_mat[i][j] = [[] for _ in range(max(adj_mat[i][j][0], 1))]
-            neigh_sq_coord = neigh_squares_query([i, j], epsilon)
-            neigh_squares = []
-            neigh_squares_loc = []
-            for coord in neigh_sq_coord:
-                neigh_squares_loc.append([coord[0], coord[1]])
-                neigh_squares.append(dataset[coord[0]][coord[1]])
-            sync_clusters(dataset[i][j], adj_mat[i][j], epsilon, [i, j],
-                          neigh_squares_loc,  *neigh_squares)
+    for comb in itertools.product(*dimension_perms):
+        adj_mat[comb] = [[] for _ in range(max(adj_mat[comb][0], 1))]
+        neigh_squares = []
+        neigh_squares_loc = []
+        for coord in neigh_sq_coord[comb]:
+            neigh_squares_loc.append(coord)
+            neigh_squares.append(dataset[coord])
+        sync_clusters(dataset[comb], adj_mat[comb], epsilon, comb,
+                      neigh_squares_loc,  *neigh_squares)
 
     # Cluster list update
-    adj_mat = compss_wait_on(adj_mat)
-    links_list = unwrap_adj_mat(tmp_mat, adj_mat)
-    for i in range(num_grid_rows):
-        for j in range(num_grid_cols):
-            neigh_sq_coord = neigh_squares_query([i, j], epsilon)
-            neigh_squares = []
-            for coord in neigh_sq_coord:
-                neigh_squares.append(dataset[coord[0]][coord[1]])
-            expand_cluster(dataset[i][j], epsilon, border_points[i][j],
-                           *neigh_squares)
+    adj_mat = dict_compss_wait_on(adj_mat, dimension_perms)
+    links_list = unwrap_adj_mat(tmp_mat, adj_mat, neigh_sq_coord,
+                                dimension_perms)
+    for comb in itertools.product(*dimension_perms):
+        neigh_squares = []
+        for coord in neigh_sq_coord[comb]:
+            neigh_squares.append(dataset[coord])
+        expand_cluster(dataset[comb], epsilon, border_points[comb],
+                       dimension_perms, *neigh_squares)
     print links_list
     return links_list
 
