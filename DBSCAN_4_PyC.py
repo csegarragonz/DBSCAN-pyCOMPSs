@@ -10,7 +10,7 @@ from classes.DS import DisjointSet
 from classes.Data import Data
 from ast import literal_eval
 import itertools
-# import time
+import time
 import numpy as np
 import sys
 import os
@@ -142,7 +142,8 @@ def unwrap_adj_mat(tmp_mat, adj_mat, neigh_sq_coord, dimension_perms):
 
 
 @task(data=INOUT)
-def expand_cluster(data, epsilon, border_points, dimension_perms, *args):
+def expand_cluster(data, epsilon, border_points, dimension_perms, links_list,
+                   square, cardinal, file_id, *args):
     tmp_unwrap_2 = [i.value[1] for i in args]
     neigh_points_clust = np.concatenate(tmp_unwrap_2)
     for elem in border_points:
@@ -154,6 +155,33 @@ def expand_cluster(data, epsilon, border_points, dimension_perms, *args):
         if elem < -2:
             clust_ind = -1*elem - 3
             data.value[1][num] = neigh_points_clust[clust_ind]
+
+    # Map all cluster labels to general numbering
+    mappings = []
+    for k, links in enumerate(links_list):
+        for pair in links:
+            if pair[0] == square:
+                mappings.append([pair[1], k])
+    for num, elem in enumerate(data.value[1]):
+        if elem > -1:
+            for pair in mappings:
+                if int(elem) == pair[0]:
+                    data.value[1][num] = pair[1]
+
+    # Update all files (for the moment writing to another one)
+    # path = "/gpfs/projects/bsc19/COMPSs_DATASETS/dbscan/"+str(file_count)
+    path = "~/DBSCAN/data/"+str(file_id)
+    path = os.path.expanduser(path)
+    tmp_string = path+"/"+str(square[0])
+    for num, j in enumerate(square):
+        if num > 0:
+            tmp_string += "_"+str(j)
+    tmp_string += "_OUT.txt"
+    f_out = open(tmp_string, "w")
+    for num, val in enumerate(data.value[0]):
+        f_out.write(str(data.value[0][num])+" "+str(int(data.value[1][num]))
+                    + "\n")
+    f_out.close()
 #    return data
 
 
@@ -162,6 +190,9 @@ def DBSCAN(epsilon, min_points, file_id):
     #   TODO: comment the code apropriately
     #   TODO: remove hardcoded 0.1 side length
     #   TODO: use numpy masks.
+
+    # DBSCAN Algorithm
+    initial_time = time.time()
 
     # Initial Definitions (necessary?)
     epsilon = float(epsilon)
@@ -220,9 +251,10 @@ def DBSCAN(epsilon, min_points, file_id):
         for coord in neigh_sq_coord[comb]:
             neigh_squares.append(dataset[coord])
         expand_cluster(dataset[comb], epsilon, border_points[comb],
-                       dimension_perms, *neigh_squares)
-    print links_list
-    return links_list
+                       dimension_perms, links_list, comb, tmp_mat[comb],
+                       file_id, *neigh_squares)
+    print "Time elapsed: " + str(time.time()-initial_time)
+    return 1
 
 
 if __name__ == "__main__":
