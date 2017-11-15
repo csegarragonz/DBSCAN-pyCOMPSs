@@ -19,7 +19,7 @@ import os
 
 @task(data_pos=INOUT)
 def init_data(data_pos, tupla, file_id):
-    # path = "/gpfs/projects/bsc19/COMPSs_DATASETS/dbscan/"+str(file_count)
+    # path = "/gpfs/projects/bsc19/COMPSs_DATASETS/dbscan/"+str(file_id)
     path = "~/DBSCAN/data/"+str(file_id)
     path = os.path.expanduser(path)
     tmp_string = path+"/"+str(tupla[0])
@@ -58,7 +58,8 @@ def neigh_squares_query(square, epsilon):
 @task(returns=(int, defaultdict, int))
 def partial_scan_merge(data, epsilon, min_points, *args):
     # Core point location in the data chunk
-    data_copy = copy.deepcopy(data)
+    data_copy = Data()
+    data_copy.value = copy.deepcopy(data.value)
     tmp_unwrap = [i.value[0] for i in args]
     tmp_unwrap_2 = [i.value[1] for i in args]
     neigh_points = np.vstack(tmp_unwrap)
@@ -168,7 +169,7 @@ def expand_cluster(data, epsilon, border_points, dimension_perms, links_list,
                     data.value[1][num] = pair[1]
 
     # Update all files (for the moment writing to another one)
-    # path = "/gpfs/projects/bsc19/COMPSs_DATASETS/dbscan/"+str(file_count)
+    # path = "/gpfs/projects/bsc19/COMPSs_DATASETS/dbscan/"+str(file_id)
     path = "~/DBSCAN/data/"+str(file_id)
     path = os.path.expanduser(path)
     tmp_string = path+"/"+str(square[0])
@@ -211,6 +212,8 @@ def DBSCAN(epsilon, min_points, file_id):
     dataset_tmp = defaultdict()
     neigh_sq_coord = defaultdict()
     for comb in itertools.product(*dimension_perms):
+        dataset_tmp[comb] = Data()
+        # TODO: TODO: needed?
         dataset[comb] = Data()
         init_data(dataset_tmp[comb], comb, file_id)
         neigh_sq_coord[comb] = neigh_squares_query(comb, epsilon)
@@ -222,10 +225,11 @@ def DBSCAN(epsilon, min_points, file_id):
     for comb in itertools.product(*dimension_perms):
         neigh_squares = []
         for coord in neigh_sq_coord[comb]:
-            neigh_squares.append(dataset[coord])
+            neigh_squares.append(dataset_tmp[coord])
         # TODO:Use border points and adj_mat as INOUT instead of OUT
         dataset[comb], border_points[comb], adj_mat[comb] = partial_scan_merge(
                 dataset_tmp[comb], epsilon, min_points, *neigh_squares)
+    return 1
 
     # Cluster Synchronisation
     adj_mat = dict_compss_wait_on(adj_mat, dimension_perms)
