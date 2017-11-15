@@ -5,6 +5,7 @@
 from pycompss.api.task import task
 from pycompss.api.parameter import INOUT
 from pycompss.api.api import compss_wait_on
+from pycompss.api.api import compss_delete_object
 from collections import defaultdict
 from classes.DS import DisjointSet
 from classes.Data import Data
@@ -35,27 +36,30 @@ def init_data(data_pos, tupla, file_id):
 #    return data_pos
 
 
-def neigh_squares_query(square, epsilon):
-    # This could be modified to include only borders. 0.1 is the side size
+def neigh_squares_query(square, epsilon, dimensions):
+    # Only multiples of 10 are supported as possible number
+    # of squares per side.
     dim = len(square)
     neigh_squares = []
-    border_squares = int(max(epsilon/0.1, 1))
+    border_squares = [int(min(max(epsilon*i, 1), i-1)) for i in dimensions]
+#    border_squares = int(max(epsilon/0.1, 1))
     perm = []
     for i in range(dim):
-        perm.append(range(-border_squares, border_squares + 1))
+        perm.append(range(-border_squares[i], border_squares[i] + 1))
     for comb in itertools.product(*perm):
         current = []
         for i in range(dim):
-            if square[i] + comb[i] in range(10):
+            if square[i] + comb[i] in range(dimensions[i]):
                 current.append(square[i]+comb[i])
-        if len(current) == dim and current != square:
+        if len(current) == dim and current != list(square):
             neigh_squares.append(tuple(current))
     neigh_squares.append(tuple(square))
     return tuple(neigh_squares)
 
 
 # TODO: first return is an object
-@task(returns=(int, defaultdict, int))
+#@task(returns=(int, defaultdict, int))
+@task(returns=int)
 def partial_scan_merge(data, epsilon, min_points, *args):
     # Core point location in the data chunk
     data_copy = Data()
@@ -97,7 +101,8 @@ def partial_scan_merge(data, epsilon, min_points, *args):
         else:
             data_copy.value[1][pos] = cluster_count
             cluster_count += 1
-    return data_copy, non_assigned, [cluster_count]
+    # TODO: remove brackets when Javi corrects the bug
+    return [data_copy, non_assigned, [cluster_count]]
 #    return data, non_assigned
 
 
@@ -216,7 +221,11 @@ def DBSCAN(epsilon, min_points, file_id):
         # TODO: TODO: needed?
         dataset[comb] = Data()
         init_data(dataset_tmp[comb], comb, file_id)
-        neigh_sq_coord[comb] = neigh_squares_query(comb, epsilon)
+        neigh_sq_coord[comb] = neigh_squares_query(comb, epsilon,
+                                                   dimensions)
+        print comb
+        print neigh_sq_coord[comb]
+    return
 
     # TODO: compute neigh_sq out the loop
     # Partial Scan And Initial Cluster merging
@@ -226,16 +235,22 @@ def DBSCAN(epsilon, min_points, file_id):
         neigh_squares = []
         for coord in neigh_sq_coord[comb]:
             neigh_squares.append(dataset_tmp[coord])
-        # TODO:Use border points and adj_mat as INOUT instead of OUT
-        dataset[comb], border_points[comb], adj_mat[comb] = partial_scan_merge(
-                dataset_tmp[comb], epsilon, min_points, *neigh_squares)
-    return 1
+        # dataset[comb], border_points[comb], adj_mat[comb] = partial_scan_merge(
+        #         dataset_tmp[comb], epsilon, min_points, *neigh_squares)
+        # TODO: remove when Javi is done with the bug
+        a = partial_scan_merge(dataset_tmp[comb], epsilon,
+                               min_points, *neigh_squares)
+        a = compss_wait_on(a)
+        dataset[comb] = a[0]
+        border_points[comb] = a[1]
+        adj_mat[comb] = a[2]
 
     # Cluster Synchronisation
     adj_mat = dict_compss_wait_on(adj_mat, dimension_perms)
     border_points = dict_compss_wait_on(border_points, dimension_perms)
     tmp_mat = copy.deepcopy(adj_mat)
     for comb in itertools.product(*dimension_perms):
+        compss_delete_object(dataset_tmp[comb])
         adj_mat[comb] = [[] for _ in range(max(adj_mat[comb][0], 1))]
         neigh_squares = []
         neigh_squares_loc = []
