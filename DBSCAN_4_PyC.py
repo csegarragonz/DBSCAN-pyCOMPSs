@@ -215,6 +215,7 @@ def DBSCAN(epsilon, min_points, file_id):
         init_data(dataset[comb], comb, file_id)
         neigh_sq_coord[comb] = neigh_squares_query(comb, epsilon)
 
+    # TODO: compute neigh_sq out the loop
     # Partial Scan And Initial Cluster merging
     adj_mat = defaultdict()
     border_points = defaultdict()
