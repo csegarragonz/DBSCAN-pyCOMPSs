@@ -16,9 +16,10 @@ wait_and_get_jobID_MT() {
 
 #Test Parameters:
     #Number of executions of the same test
-    NUM_EXPERIMENTS=3
+    NUM_EXPERIMENTS=1
     #Diferent Datasets to be read from /gpfs/projects/bsc19/COMPSs_DATASETS/dbscan/DATASETS[i]/*.txt
-    DATASETS=(1 2 3 4 5)
+#    DATASETS=(1 2 3 4)
+    DATASETS=(2)
     DATASETS_LEN=${#DATASETS[@]}
     STRONG_SCALING=true
     WEAK_SCALING=false
