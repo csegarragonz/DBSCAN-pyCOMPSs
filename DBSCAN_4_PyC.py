@@ -187,7 +187,6 @@ def expand_cluster(data, epsilon, border_points, dimension_perms, links_list,
         f_out.write(str(data_copy.value[0][num])+" "
                     + str(int(data_copy.value[1][num])) + "\n")
     f_out.close()
-#    return data_copy
 
 
 def DBSCAN(epsilon, min_points, file_id):
@@ -215,9 +214,11 @@ def DBSCAN(epsilon, min_points, file_id):
     dimension_perms = [range(i) for i in dimensions]
     dataset = defaultdict()
     dataset_tmp = defaultdict()
+    dataset_out = defaultdict()
     neigh_sq_coord = defaultdict()
     for comb in itertools.product(*dimension_perms):
         dataset_tmp[comb] = Data()
+        dataset_out[comb] = Data()
         # TODO: TODO: needed?
         dataset[comb] = Data()
         init_data(dataset_tmp[comb], comb, file_id)
