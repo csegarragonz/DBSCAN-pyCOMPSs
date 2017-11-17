@@ -57,9 +57,7 @@ def neigh_squares_query(square, epsilon, dimensions):
     return tuple(neigh_squares)
 
 
-# TODO: first return is an object
-#@task(returns=(int, defaultdict, int))
-@task(returns=int)
+@task(returns=(Data, defaultdict, list))
 def partial_scan_merge(data, epsilon, min_points, *args):
     # Core point location in the data chunk
     data_copy = Data()
@@ -102,7 +100,7 @@ def partial_scan_merge(data, epsilon, min_points, *args):
             data_copy.value[1][pos] = cluster_count
             cluster_count += 1
     # TODO: remove brackets when Javi corrects the bug
-    return [data_copy, non_assigned, [cluster_count]]
+    return data_copy, non_assigned, [cluster_count]
 #    return data, non_assigned
 
 
@@ -223,11 +221,7 @@ def DBSCAN(epsilon, min_points, file_id):
         init_data(dataset_tmp[comb], comb, file_id)
         neigh_sq_coord[comb] = neigh_squares_query(comb, epsilon,
                                                    dimensions)
-        print comb
-        print neigh_sq_coord[comb]
-    return
 
-    # TODO: compute neigh_sq out the loop
     # Partial Scan And Initial Cluster merging
     adj_mat = defaultdict()
     border_points = defaultdict()
@@ -235,15 +229,8 @@ def DBSCAN(epsilon, min_points, file_id):
         neigh_squares = []
         for coord in neigh_sq_coord[comb]:
             neigh_squares.append(dataset_tmp[coord])
-        # dataset[comb], border_points[comb], adj_mat[comb] = partial_scan_merge(
-        #         dataset_tmp[comb], epsilon, min_points, *neigh_squares)
-        # TODO: remove when Javi is done with the bug
-        a = partial_scan_merge(dataset_tmp[comb], epsilon,
-                               min_points, *neigh_squares)
-        a = compss_wait_on(a)
-        dataset[comb] = a[0]
-        border_points[comb] = a[1]
-        adj_mat[comb] = a[2]
+        dataset[comb], border_points[comb], adj_mat[comb] = partial_scan_merge(
+                dataset_tmp[comb], epsilon, min_points, *neigh_squares)
 
     # Cluster Synchronisation
     adj_mat = dict_compss_wait_on(adj_mat, dimension_perms)
