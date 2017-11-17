@@ -46,7 +46,7 @@ def main(file_count, dimensions):
     centers = np.random.sample((num_centers, dim))
     std = np.random.sample((num_centers, dim, dim))
     for i, c in enumerate(std):
-        std[i] = np.dot(std[i], std[i].transpose())/10
+        std[i] = np.dot(std[i], std[i].transpose())/2
 #    path = "/gpfs/projects/bsc19/COMPSs_DATASETS/dbscan/"+str(file_count)
     path = "~/DBSCAN/data/"+str(file_count)
     path = os.path.expanduser(path)

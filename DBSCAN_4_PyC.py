@@ -144,20 +144,22 @@ def unwrap_adj_mat(tmp_mat, adj_mat, neigh_sq_coord, dimension_perms):
     return out
 
 
-@task(data=INOUT)
+@task()
 def expand_cluster(data, epsilon, border_points, dimension_perms, links_list,
                    square, cardinal, file_id, *args):
+    data_copy = Data()
+    data_copy.value = copy.deepcopy(data.value)
     tmp_unwrap_2 = [i.value[1] for i in args]
     neigh_points_clust = np.concatenate(tmp_unwrap_2)
     for elem in border_points:
         for p in border_points[elem]:
             if neigh_points_clust[p] > -1:
-                data.value[1][elem] = neigh_points_clust[p]
+                data_copy.value[1][elem] = neigh_points_clust[p]
                 break
-    for num, elem in enumerate(data.value[1]):
+    for num, elem in enumerate(data_copy.value[1]):
         if elem < -2:
             clust_ind = -1*elem - 3
-            data.value[1][num] = neigh_points_clust[clust_ind]
+            data_copy.value[1][num] = neigh_points_clust[clust_ind]
 
     # Map all cluster labels to general numbering
     mappings = []
@@ -165,11 +167,11 @@ def expand_cluster(data, epsilon, border_points, dimension_perms, links_list,
         for pair in links:
             if pair[0] == square:
                 mappings.append([pair[1], k])
-    for num, elem in enumerate(data.value[1]):
+    for num, elem in enumerate(data_copy.value[1]):
         if elem > -1:
             for pair in mappings:
                 if int(elem) == pair[0]:
-                    data.value[1][num] = pair[1]
+                    data_copy.value[1][num] = pair[1]
 
     # Update all files (for the moment writing to another one)
     # path = "/gpfs/projects/bsc19/COMPSs_DATASETS/dbscan/"+str(file_id)
@@ -181,11 +183,11 @@ def expand_cluster(data, epsilon, border_points, dimension_perms, links_list,
             tmp_string += "_"+str(j)
     tmp_string += "_OUT.txt"
     f_out = open(tmp_string, "w")
-    for num, val in enumerate(data.value[0]):
-        f_out.write(str(data.value[0][num])+" "+str(int(data.value[1][num]))
-                    + "\n")
+    for num, val in enumerate(data_copy.value[0]):
+        f_out.write(str(data_copy.value[0][num])+" "
+                    + str(int(data_copy.value[1][num])) + "\n")
     f_out.close()
-#    return data
+#    return data_copy
 
 
 def DBSCAN(epsilon, min_points, file_id):
