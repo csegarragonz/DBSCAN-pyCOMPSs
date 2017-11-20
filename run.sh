@@ -23,9 +23,9 @@
 #python ./launchDBSCAN.py ./data/moons.txt 0.015 10 1 2D
 
 #Local execution: -d for debugging, -t for tracing and -g for the dependency graph.
-runcompss --lang=python -g ./DBSCAN_4_PyC.py 0.1 10 1
-#python DBSCAN_4_PyC.py 0.1 10 1
-#runcompss --lang=python -d ./Gen_Data_DBSCAN.py 2 [10,10,10]
+#runcompss --lang=python ./DBSCAN_4_PyC.py 0.1 10 3
+python DBSCAN_4_PyC.py 0.1 10 1
+#runcompss --lang=python ./Gen_Data_DBSCAN.py 3 [100,100]
 #python Gen_Data_DBSCAN.py 1 [10,10]
 
 #Running on a Cluster with COMPSs installed and all the dependencies.

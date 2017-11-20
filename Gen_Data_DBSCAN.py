@@ -1,5 +1,5 @@
-# from pycompss.api.api import compss_wait_on
-# from pycompss.api.task import task
+from pycompss.api.api import compss_wait_on
+from pycompss.api.task import task
 from ast import literal_eval
 import os
 import sys
@@ -7,7 +7,7 @@ import numpy as np
 from itertools import product
 
 
-# @task(returns=list)
+@task(returns=list)
 def init_data(comb, path, num_points_max, centers, std):
     data = []
     dim = len(comb)
@@ -40,7 +40,7 @@ def init_data(comb, path, num_points_max, centers, std):
 
 def main(file_count, dimensions):
     dimensions = literal_eval(dimensions)
-    num_points_max = 10000
+    num_points_max = 30
     dim = len(dimensions)
     num_centers = len(dimensions)
     centers = np.random.sample((num_centers, dim))
@@ -65,7 +65,7 @@ def main(file_count, dimensions):
                 tmp_string += "_"+str(j)
         tmp_string += ".txt"
         lengths[i] = init_data(comb, tmp_string, num_points_max, centers, std)
-#    lengths = compss_wait_on(lengths)
+    lengths = compss_wait_on(lengths)
     lengths = [a for m in lengths for a in m]
     print "Number of points created: " + str(sum(lengths))
 

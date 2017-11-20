@@ -219,7 +219,6 @@ def DBSCAN(epsilon, min_points, file_id):
     neigh_sq_coord = defaultdict()
     for comb in itertools.product(*dimension_perms):
         dataset_tmp[comb] = Data()
-        # TODO: TODO: needed?
         dataset[comb] = Data()
         init_data(dataset_tmp[comb], comb, file_id)
         neigh_sq_coord[comb] = neigh_squares_query(comb, epsilon,
