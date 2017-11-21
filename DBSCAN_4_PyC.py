@@ -194,7 +194,6 @@ def expand_cluster(data, epsilon, border_points, dimension_perms, links_list,
 def DBSCAN(epsilon, min_points, file_id):
     #   TODO: code from scratch the Disjoint Set
     #   TODO: comment the code apropriately
-    #   TODO: remove hardcoded 0.1 side length
     #   TODO: use numpy masks.
 
     # DBSCAN Algorithm
@@ -242,14 +241,9 @@ def DBSCAN(epsilon, min_points, file_id):
                                              epsilon, min_points,
                                              *neigh_squares)
 
-
-#    # Cluster Synchronisation
-#    adj_mat = dict_compss_wait_on(adj_mat, dimension_perms)
-#    border_points = dict_compss_wait_on(border_points, dimension_perms)
-#    tmp_mat = copy.deepcopy(adj_mat)
+    # Cluster Synchronisation
     for comb in itertools.product(*dimension_perms):
         compss_delete_object(dataset_tmp[comb])
-#        adj_mat[comb] = [[] for _ in range(max(adj_mat[comb][0], 1))]
         neigh_squares = []
         neigh_squares_loc = []
         for coord in neigh_sq_coord[comb]:
