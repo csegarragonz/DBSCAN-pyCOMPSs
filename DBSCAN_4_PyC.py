@@ -88,25 +88,6 @@ def partial_scan_merge(data, epsilon, min_points, *args):
                         tmp.append(pos)
             else:
                 non_assigned[num] = tmp
-#     for num, point in enumerate(data_copy.value[0]):
-#         poss_neigh = np.linalg.norm(neigh_points - point, axis=1) - epsilon < 0
-#         neigh_count = np.sum(poss_neigh)
-#         if neigh_count > min_points:
-#             data_copy.value[1][num] = -1
-#         elif neigh_count > 0:
-#             tmp = []
-#             for pos, proxim in enumerate(poss_neigh):
-#                 if proxim:
-#                     # Adding three since later to detect core points we will
-#                     # require value > -1 and -0 is > 1 and not to confuse it
-#                     # with a noise point
-#                     if neigh_points_clust[pos] == -1:
-#                         data_copy.value[1][num] = -(pos+3)
-#                         break
-#                     else:
-#                         tmp.append(pos)
-#             else:
-#                 non_assigned[num] = tmp
     # Cluster the core points found
     cluster_count = 0
     core_points = [[num, p] for num, p in enumerate(data_copy.value[0]) if
@@ -221,7 +202,6 @@ def expand_cluster(data, epsilon, border_points, dimension_perms, links_list,
 def DBSCAN(epsilon, min_points, file_id):
     #   TODO: code from scratch the Disjoint Set
     #   TODO: comment the code apropriately
-    #   TODO: use numpy masks.
 
     # DBSCAN Algorithm
     initial_time = time.time()
