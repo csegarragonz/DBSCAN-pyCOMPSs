@@ -1,5 +1,5 @@
 # DBSCAN 4 PyCOMPSs
-# Version without nesting
+# Version with nesting
 # carlos.segarra @ bsc.es
 
 # Imports
@@ -114,23 +114,47 @@ def dict_compss_wait_on(dicc, dimension_perms):
     return dicc
 
 
+def orquestrate_sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc,
+                              dist_mat, len_neighs, quocient, res,
+                              fut_list, *args):
+    # TODO: currently hardcoded
+    THRESHOLD = 100
+    if (len_neighs/quocient) > THRESHOLD:
+        orquestrate_sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc,
+                                  dist_mat, len_neighs, quocient*2,
+                                  res*2 + 0, fut_list, *args)
+        orquestrate_sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc,
+                                  dist_mat, len_neighs, quocient*2,
+                                  res*2 + 1, fut_list, *args)
+    else:
+        fut_list.append(sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc,
+                             dist_mat, quocient, res, *args))
+        return
+    # TODO: picar el merge
+    # TODO: fer len_neigh accessible
+
+
 @task(returns=list)
 # @task(adj_mat=INOUT)
 def sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc, dist_mat,
-                  *args):
+                  quocient, res, *args):
     # TODO: change *args
     adj_mat_copy = [[] for _ in range(max(adj_mat[0], 1))]
     tmp_unwrap_1 = [i.value[1] for i in args]
-    tmp_unwrap_1 = np.concatenate(tmp_unwrap_1)
+    tmp_unwrap_1 = np.array([i for num, i in
+                             enumerate(np.concatenate(tmp_unwrap_1))
+                             if ((num % quocient) == res)])
     tmp_unwrap_2 = [neigh_sq_loc[i] for i in range(len(neigh_sq_loc))
                     for j in range(len(args[i].value[1]))]
+    tmp_unwrap_2 = [i for num, i in enumerate(tmp_unwrap_2) if
+                    ((num % quocient) == res)]
     nice_args = [tmp_unwrap_1, tmp_unwrap_2]
     for num in range(dist_mat.shape[0]):
         current_clust_id = int(data.value[1][num])
         if current_clust_id > -1:
             # for tmp2, loc2 in nice_args:
-            for num2, poss_neigh in enumerate(dist_mat[num]):
-                if poss_neigh:
+            for num2 in range(len(nice_args[0])):
+                if dist_mat[num][num2*quocient + res]:
                     clust_ind = int(nice_args[0][num2])
                     adj_mat_elem = [nice_args[1][num2], clust_ind]
                     if ((clust_ind > -1) and
