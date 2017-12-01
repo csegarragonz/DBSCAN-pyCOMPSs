@@ -19,6 +19,21 @@ import sys
 import os
 
 
+def count_lines(tupla, file_id):
+    # path = "/gpfs/projects/bsc19/COMPSs_DATASETS/dbscan/"+str(file_id)
+    path = "~/DBSCAN/data/"+str(file_id)
+    path = os.path.expanduser(path)
+    tmp_string = path+"/"+str(tupla[0])
+    for num, j in enumerate(tupla):
+        if num > 0:
+            tmp_string += "_"+str(j)
+    tmp_string += ".txt"
+    with open(tmp_string) as infile:
+        for i, line in enumerate(infile):
+            pass
+        return i+1
+
+
 @task(data_pos=INOUT)
 def init_data(data_pos, tupla, file_id):
     # path = "/gpfs/projects/bsc19/COMPSs_DATASETS/dbscan/"+str(file_id)
@@ -127,11 +142,23 @@ def orquestrate_sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc,
                                   dist_mat, len_neighs, quocient*2,
                                   res*2 + 1, fut_list, *args)
     else:
-        fut_list.append(sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc,
-                             dist_mat, quocient, res, *args))
-        return
+        fut_list.append(sync_clusters(data, adj_mat, epsilon, coord,
+                                      neigh_sq_loc, dist_mat, quocient, res,
+                                      *args))
+    return fut_list
     # TODO: picar el merge
     # TODO: fer len_neigh accessible
+
+
+@task(returns=list)
+def merge_task(adj_mat, *args):
+    adj_mat_copy = [[] for _ in range(max(adj_mat[0], 1))]
+    for args_i in args:
+        for num, list_elem in enumerate(args_i):
+            for elem in list_elem:
+                if elem not in adj_mat_copy[num]:
+                    adj_mat_copy[num].append(elem)
+    return adj_mat_copy
 
 
 @task(returns=list)
@@ -249,16 +276,18 @@ def DBSCAN(epsilon, min_points, file_id):
     dataset_tmp = defaultdict()
     dist_mat = defaultdict()
     neigh_sq_coord = defaultdict()
+    len_datasets = defaultdict()
     for comb in itertools.product(*dimension_perms):
         dataset[comb] = Data()
         dataset_tmp[comb] = Data()
         dist_mat[comb] = Data()
+        len_datasets[comb] = count_lines(comb, file_id)
         init_data(dataset_tmp[comb], comb, file_id)
         neigh_sq_coord[comb] = neigh_squares_query(comb, epsilon,
                                                    dimensions)
 
     # Partial Scan And Initial Cluster merging
-    dataset_tmp = dict_compss_wait_on(dataset_tmp, dimension_perms)
+#    dataset_tmp = dict_compss_wait_on(dataset_tmp, dimension_perms)
     adj_mat = defaultdict()
     tmp_mat = defaultdict()
     border_points = defaultdict()
@@ -282,13 +311,17 @@ def DBSCAN(epsilon, min_points, file_id):
         compss_delete_object(dataset_tmp[comb])
         neigh_squares = []
         neigh_squares_loc = []
+        len_neighs = 0
         for coord in neigh_sq_coord[comb]:
             neigh_squares_loc.append(coord)
             neigh_squares.append(dataset[coord])
+            len_neighs += len_datasets[coord]
         # TODO: make as INOUT instead of OUT, currently not working
-        adj_mat[comb] = sync_clusters(dataset[comb], adj_mat[comb], epsilon,
-                                      comb, neigh_squares_loc, dist_mat[comb],
-                                      *neigh_squares)
+        fut_list = orquestrate_sync_clusters(dataset[comb], adj_mat[comb],
+                                             epsilon, comb, neigh_squares_loc,
+                                             dist_mat[comb], len_neighs, 1, 0,
+                                             [], *neigh_squares)
+        adj_mat[comb] = merge_task(adj_mat[comb], *fut_list)
 
     # Cluster list update
     # TODO: join the three
@@ -304,6 +337,7 @@ def DBSCAN(epsilon, min_points, file_id):
         expand_cluster(dataset[comb], epsilon, border_points[comb],
                        dimension_perms, links_list, comb, tmp_mat[comb],
                        file_id, *neigh_squares)
+    print links_list
     print "Time elapsed: " + str(time.time()-initial_time)
     return 1
 

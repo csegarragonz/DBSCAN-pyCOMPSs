@@ -280,6 +280,7 @@ def DBSCAN(epsilon, min_points, file_id):
         expand_cluster(dataset[comb], epsilon, border_points[comb],
                        dimension_perms, links_list, comb, tmp_mat[comb],
                        file_id, *neigh_squares)
+    print links_list
     print "Time elapsed: " + str(time.time()-initial_time)
     return 1
 
