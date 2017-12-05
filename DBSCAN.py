@@ -278,6 +278,8 @@ def DBSCAN(epsilon, min_points, file_id):
     neigh_sq_coord = defaultdict()
     len_datasets = defaultdict()
     for comb in itertools.product(*dimension_perms):
+        # TODO: implement init_data as a class method maybe inside
+        # the initialisation
         dataset[comb] = Data()
         dataset_tmp[comb] = Data()
         dist_mat[comb] = Data()
