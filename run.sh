@@ -23,7 +23,14 @@
 #python ./launchDBSCAN.py ./data/moons.txt 0.015 10 1 2D
 
 #Local execution: -d for debugging, -t for tracing and -g for the dependency graph.
-runcompss --lang=python -t ./DBSCAN_4_PyC.py 0.1 10 1
+scriptDir=$(pwd)/$(dirname $0)
+EXEC_FILE=${scriptDir}/DBSCAN.py
+
+runcompss \
+    --lang=python \
+    --debug=true \
+    --project=/home/csegarra/DBTRASH/mem/memory_usage_test.xml \
+    ./DBSCAN.py 0.1 10 1
 #python DBSCAN_4_PyC.py 0.1 10 1
 #runcompss --lang=python ./Gen_Data_DBSCAN.py 3 [100,100]
 #python Gen_Data_DBSCAN.py 1 [10,10]

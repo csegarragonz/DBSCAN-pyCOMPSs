@@ -310,7 +310,7 @@ def DBSCAN(epsilon, min_points, file_id):
 
     # Cluster Synchronisation
     for comb in itertools.product(*dimension_perms):
-        compss_delete_object(dataset_tmp[comb])
+#        compss_delete_object(dataset_tmp[comb])
         neigh_squares = []
         neigh_squares_loc = []
         len_neighs = 0
