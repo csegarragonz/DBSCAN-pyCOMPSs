@@ -1,5 +1,5 @@
 # DBSCAN 4 PyCOMPSs
-# Version with nesting
+# Version with nesting applied to both time-demanding tasks
 # carlos.segarra @ bsc.es
 
 # Imports
@@ -73,15 +73,37 @@ def neigh_squares_query(square, epsilon, dimensions):
     return tuple(neigh_squares)
 
 
-@task(returns=(Data, defaultdict, list, list, list))
-def partial_scan_merge(data, epsilon, min_points, *args):
+def orquestrate_scan_merge(data, epsilon, min_points, len_neighs, quocient,
+                           res, fut_list, *args):
+    # TODO: currently hardcoded
+    THRESHOLD = 100
+    if (len_neighs/quocient) > THRESHOLD:
+        orquestrate_scan_merge(data, epsilon, min_points, len_neighs,
+                               quocient*2, res*2 + 0, fut_list, *args)
+        orquestrate_scan_merge(data, epsilon, min_points, len_neighs,
+                               quocient*2, res*2 + 1, fut_list, *args)
+    else:
+        obj = [[], [], []]
+        [obj[0], obj[1],
+         obj[2]] = partial_scan_merge(data, epsilon, min_points, quocient,
+                                      res, *args)
+        for num, _list in enumerate(fut_list):
+            _list.append(obj[num])
+    return fut_list
+#    Si peta la alternativa mes decent
+#    return fut_list[0], fut_list[1], fut_list[2], fut_list[3], fut_list[4]
+
+
+@task(returns=(Data, defaultdict, list))
+def partial_scan_merge(data, epsilon, min_points, quocient, res, *args):
     # Core point location in the data chunk
     data_copy = Data()
-    data_copy.value = copy.deepcopy(data.value)
-    tmp_unwrap = [i.value[0] for i in args]
-    tmp_unwrap_2 = [i.value[1] for i in args]
-    neigh_points = np.vstack(tmp_unwrap)
-    neigh_points_clust = np.concatenate(tmp_unwrap_2)
+    data_copy.value = [np.array([i for num, i in enumerate(data.value[0])
+                                 if ((num % quocient) == res)]),
+                       np.array([i for num, i in enumerate(data.value[1])
+                                 if ((num % quocient) == res)])]
+    neigh_points = np.vstack([i.value[0] for i in args])
+    neigh_points_clust = np.concatenate([i.value[1] for i in args])
     non_assigned = defaultdict(int)
     dist_mat = np.linalg.norm(neigh_points -
                               data_copy.value[0][:, np.newaxis, :],
@@ -104,13 +126,25 @@ def partial_scan_merge(data, epsilon, min_points, *args):
                         tmp.append(pos)
             else:
                 non_assigned[num] = tmp
+    return [data_copy, non_assigned, dist_mat]
+#    return data, non_assigned
+
+
+@task(returns=(Data, list, list))
+# @task(data_copy=INOUT, tmp_mat=INOUT, adj_mat=INOUT)
+def merge_task_ps_0(epsilon, *args):
+    # This one is for data type
+    data_copy = Data()
+    data_copy.value = [np.vstack([i.value[0] for i in args]),
+                       np.concatenate([i.value[1] for i in args])]
     # Cluster the core points found
     cluster_count = 0
     core_points = [[num, p] for num, p in enumerate(data_copy.value[0]) if
                    data_copy.value[1][num] == -1]
     for pos, point in core_points:
         # TODO: make a one-liner out of this
-        tmp_vec = (np.linalg.norm(data_copy.value[0]-point, axis=1)-epsilon) < 0
+        tmp_vec = ((np.linalg.norm(data_copy.value[0]-point, axis=1)-epsilon)
+                   < 0)
         for num, poss_neigh in enumerate(tmp_vec):
             if poss_neigh and data_copy.value[1][num] > -1:
                 data_copy.value[1][pos] = data_copy.value[1][num]
@@ -118,9 +152,23 @@ def partial_scan_merge(data, epsilon, min_points, *args):
         else:
             data_copy.value[1][pos] = cluster_count
             cluster_count += 1
-    return [data_copy, non_assigned, [cluster_count], [cluster_count],
-            dist_mat]
-#    return data, non_assigned
+    return [data_copy, [cluster_count], [cluster_count]]
+
+
+@task(returns=defaultdict)
+# @task(border_points=INOUT)
+def merge_task_ps_1(*args):
+    # This one is for data type
+    border_points = defaultdict(list)
+    for _dict in args:
+        for key in _dict:
+            border_points[key] += _dict[key]
+    return border_points
+
+
+@task(returns=list)
+def merge_task_ps_2(*args):
+    return np.vstack([i for i in args])
 
 
 def dict_compss_wait_on(dicc, dimension_perms):
@@ -146,8 +194,6 @@ def orquestrate_sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc,
                                       neigh_sq_loc, dist_mat, quocient, res,
                                       *args))
     return fut_list
-    # TODO: picar el merge
-    # TODO: fer len_neigh accessible
 
 
 @task(returns=list)
@@ -162,7 +208,6 @@ def merge_task(adj_mat, *args):
 
 
 @task(returns=list)
-# @task(adj_mat=INOUT)
 def sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc, dist_mat,
                   quocient, res, *args):
     # TODO: change *args
@@ -254,6 +299,7 @@ def expand_cluster(data, epsilon, border_points, dimension_perms, links_list,
 def DBSCAN(epsilon, min_points, file_id):
     #   TODO: code from scratch the Disjoint Set
     #   TODO: comment the code apropriately
+    #   TODO: separate the code in different modules
 
     # DBSCAN Algorithm
     initial_time = time.time()
@@ -277,40 +323,42 @@ def DBSCAN(epsilon, min_points, file_id):
     dist_mat = defaultdict()
     neigh_sq_coord = defaultdict()
     len_datasets = defaultdict()
+    adj_mat = defaultdict()
+    tmp_mat = defaultdict()
+    border_points = defaultdict()
     for comb in itertools.product(*dimension_perms):
         # TODO: implement init_data as a class method maybe inside
         # the initialisation
         dataset[comb] = Data()
         dataset_tmp[comb] = Data()
-        dist_mat[comb] = Data()
+        dist_mat[comb] = []
         len_datasets[comb] = count_lines(comb, file_id)
+        adj_mat[comb] = [0]
+        tmp_mat[comb] = [0]
+        border_points[comb] = defaultdict(list)
         init_data(dataset_tmp[comb], comb, file_id)
         neigh_sq_coord[comb] = neigh_squares_query(comb, epsilon,
                                                    dimensions)
 
     # Partial Scan And Initial Cluster merging
 #    dataset_tmp = dict_compss_wait_on(dataset_tmp, dimension_perms)
-    adj_mat = defaultdict()
-    tmp_mat = defaultdict()
-    border_points = defaultdict()
     for comb in itertools.product(*dimension_perms):
         adj_mat[comb] = [0]
         tmp_mat[comb] = [0]
         neigh_squares = []
         for coord in neigh_sq_coord[comb]:
             neigh_squares.append(dataset_tmp[coord])
-        # Adj_mat as inout?
-        [dataset[comb],
-         border_points[comb],
-         tmp_mat[comb],
-         adj_mat[comb],
-         dist_mat[comb]] = partial_scan_merge(dataset_tmp[comb],
-                                              epsilon, min_points,
-                                              *neigh_squares)
+        fut_list = orquestrate_scan_merge(dataset_tmp[comb], epsilon,
+                                          min_points, len_datasets[coord], 1,
+                                          0, [[], [], []], *neigh_squares)
+        [dataset[comb], tmp_mat[comb],
+         adj_mat[comb]] = merge_task_ps_0(epsilon, *fut_list[0])
+        border_points[comb] = merge_task_ps_1(*fut_list[1])
+        dist_mat[comb] = merge_task_ps_2(*fut_list[2])
 
     # Cluster Synchronisation
     for comb in itertools.product(*dimension_perms):
-#        compss_delete_object(dataset_tmp[comb])
+        compss_delete_object(dataset_tmp[comb])
         neigh_squares = []
         neigh_squares_loc = []
         len_neighs = 0
