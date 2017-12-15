@@ -34,8 +34,21 @@ def count_lines(tupla, file_id):
         return i+1
 
 
-@task(data_pos=INOUT)
-def init_data(data_pos, tupla, file_id):
+def orquestrate_init_data(data_pos, tupla, file_id, len_data, quocient,
+                          res, fut_list):
+    THRESHOLD = 100
+    if (len_data/quocient) > THRESHOLD:
+        orquestrate_init_data(data_pos, tupla, file_id, len_data,
+                              quocient*2, res*2 + 0, fut_list)
+        orquestrate_init_data(data_pos, tupla, file_id, len_data,
+                              quocient*2, res*2 + 1, fut_list)
+    else:
+        fut_list.append(init_data(data_pos, tupla, file_id, quocient, res))
+    return fut_list
+
+
+@task(returns=Data)
+def init_data(data_pos, tupla, file_id, quocient, res):
     # path = "/gpfs/projects/bsc19/COMPSs_DATASETS/dbscan/"+str(file_id)
     path = "~/DBSCAN/data/"+str(file_id)
     path = os.path.expanduser(path)
@@ -44,12 +57,20 @@ def init_data(data_pos, tupla, file_id):
         if num > 0:
             tmp_string += "_"+str(j)
     tmp_string += ".txt"
-    data_pos.value = np.loadtxt(tmp_string)
-    if len(np.shape(data_pos.value)) == 1:
-        data_pos.value = np.array([data_pos.value])
+    from pandas import read_csv
+    df = read_csv(tmp_string, sep=' ', skiprows=lambda x: (x % quocient)
+                  != res)
+    data_pos.value = df.values
     tmp_vec = -2*np.ones(np.shape(data_pos.value)[0])
     data_pos.value = [data_pos.value, tmp_vec]
-#    return data_pos
+    return data_pos
+
+
+@task(returns=Data)
+def merge_task_init(*args):
+    tmp_data = Data()
+    tmp_data.value = [np.vstack([i.value[0] for i in args]),
+                      np.concatenate([i.value[1] for i in args])]
 
 
 def neigh_squares_query(square, epsilon, dimensions):
@@ -336,7 +357,9 @@ def DBSCAN(epsilon, min_points, file_id):
         adj_mat[comb] = [0]
         tmp_mat[comb] = [0]
         border_points[comb] = defaultdict(list)
-        init_data(dataset_tmp[comb], comb, file_id)
+        fut_list = orquestrate_init_data(dataset_tmp[comb], comb, file_id,
+                                         len_datasets[comb], 1, 0, [])
+        dataset_tmp[comb] = merge_task_init(*fut_list)
         neigh_sq_coord[comb] = neigh_squares_query(comb, epsilon,
                                                    dimensions)
 
