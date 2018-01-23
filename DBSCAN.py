@@ -34,21 +34,23 @@ def count_lines(tupla, file_id):
         return i+1
 
 
-def orquestrate_init_data(data_pos, tupla, file_id, len_data, quocient,
+def orquestrate_init_data(tupla, file_id, len_data, quocient,
                           res, fut_list):
     THRESHOLD = 100
     if (len_data/quocient) > THRESHOLD:
-        orquestrate_init_data(data_pos, tupla, file_id, len_data,
-                              quocient*2, res*2 + 0, fut_list)
-        orquestrate_init_data(data_pos, tupla, file_id, len_data,
-                              quocient*2, res*2 + 1, fut_list)
+        fut_list = orquestrate_init_data(tupla, file_id, len_data,
+                                         quocient*2, res*2 + 0, fut_list)
+        fut_list = orquestrate_init_data(tupla, file_id, len_data,
+                                         quocient*2, res*2 + 1, fut_list)
     else:
-        fut_list.append(init_data(data_pos, tupla, file_id, quocient, res))
+        tmp_f = init_data(tupla, file_id, quocient, res)
+        fut_list.append(tmp_f)
     return fut_list
 
 
-@task(returns=Data)
-def init_data(data_pos, tupla, file_id, quocient, res):
+@task(returns=1)
+def init_data(tupla, file_id, quocient, res):
+    data_pos = Data()
     # path = "/gpfs/projects/bsc19/COMPSs_DATASETS/dbscan/"+str(file_id)
     path = "~/DBSCAN/data/"+str(file_id)
     path = os.path.expanduser(path)
@@ -60,20 +62,19 @@ def init_data(data_pos, tupla, file_id, quocient, res):
     from pandas import read_csv
     df = read_csv(tmp_string, sep=' ', skiprows=lambda x: (x % quocient)
                   != res)
-    data_pos.value = df.columns.values.astype(float)
-    if len(np.shape(data_pos.value)) == 1:
-        data_pos.value = np.array([data_pos.value])
+    data_pos.value = df.values.astype(float)
+    if np.shape(data_pos.value)[0] == 0:
+        data_pos.value = np.array([df.columns.values.astype(float)])
     tmp_vec = -2*np.ones(np.shape(data_pos.value)[0])
     data_pos.value = [data_pos.value, tmp_vec]
     return data_pos
 
 
-@task(returns=Data)
+@task(returns=1)
 def merge_task_init(*args):
     tmp_data = Data()
     tmp_data.value = [np.vstack([i.value[0] for i in args]),
                       np.concatenate([i.value[1] for i in args])]
-    print tmp_data.value
     return tmp_data
 
 
@@ -103,30 +104,42 @@ def orquestrate_scan_merge(data, epsilon, min_points, len_neighs, quocient,
     # TODO: currently hardcoded
     THRESHOLD = 100
     if (len_neighs/quocient) > THRESHOLD:
-        orquestrate_scan_merge(data, epsilon, min_points, len_neighs,
-                               quocient*2, res*2 + 0, fut_list, *args)
-        orquestrate_scan_merge(data, epsilon, min_points, len_neighs,
-                               quocient*2, res*2 + 1, fut_list, *args)
+        fut_list[0], fut_list[1] = orquestrate_scan_merge(data, epsilon,
+                                                          min_points,
+                                                          len_neighs,
+                                                          quocient*2,
+                                                          res*2 + 0,
+                                                          fut_list, *args)
+        fut_list[0], fut_list[1] = orquestrate_scan_merge(data, epsilon,
+                                                          min_points,
+                                                          len_neighs,
+                                                          quocient*2,
+                                                          res*2 + 1,
+                                                          fut_list, *args)
+#        orquestrate_scan_merge(data, epsilon, min_points, len_neighs,
+#                               quocient*2, res*2 + 1, fut_list, *args)
     else:
         obj = [[], []]
-        [obj[0], obj[1]] = partial_scan_merge(data, epsilon, min_points,
-                                              quocient, res, *args)
+        obj[0], obj[1] = partial_scan_merge(data, epsilon, min_points,
+                                            quocient, res, *args)
         for num, _list in enumerate(fut_list):
             _list.append(obj[num])
-    return fut_list
+    return fut_list[0], fut_list[1]
 #    Si peta la alternativa mes decent
 #    return fut_list[0], fut_list[1], fut_list[2], fut_list[3], fut_list[4]
 
 
-@task(returns=(Data, defaultdict))
+@task(returns=2)
 def partial_scan_merge(data, epsilon, min_points, quocient, res, *args):
     # Core point location in the data chunk
-    print data.value
     data_copy = Data()
     data_copy.value = [np.array([i for num, i in enumerate(data.value[0])
                                  if ((num % quocient) == res)]),
                        np.array([i for num, i in enumerate(data.value[1])
                                  if ((num % quocient) == res)])]
+    if (quocient == 1) and (res == 0):
+        print data.value
+        print data_copy.value
     neigh_points = np.vstack([i.value[0] for i in args])
     neigh_points_clust = np.concatenate([i.value[1] for i in args])
     non_assigned = defaultdict(int)
@@ -149,19 +162,22 @@ def partial_scan_merge(data, epsilon, min_points, quocient, res, *args):
                         tmp.append(pos)
             else:
                 non_assigned[num] = tmp
-    return [data_copy, non_assigned]
+#    if data_copy.value.shape == (1,0):
+    return data_copy, non_assigned
 #    return data, non_assigned
 
 
-@task(returns=(Data, list, list))
+@task(returns=3)
 # @task(data_copy=INOUT, tmp_mat=INOUT, adj_mat=INOUT)
 def merge_task_ps_0(epsilon, *args):
     # This one is for data type
+    for i in args:
+        print i.value
     data_copy = Data()
     data_copy.value = [np.vstack([i.value[0] for i in args]),
                        np.concatenate([i.value[1] for i in args])]
-    print data_copy.value
     # Cluster the core points found
+    print data_copy.value
     cluster_count = 0
     core_points = [[num, p] for num, p in enumerate(data_copy.value[0]) if
                    data_copy.value[1][num] == -1]
@@ -176,7 +192,7 @@ def merge_task_ps_0(epsilon, *args):
         else:
             data_copy.value[1][pos] = cluster_count
             cluster_count += 1
-    return [data_copy, [cluster_count], [cluster_count]]
+    return data_copy, [cluster_count], [cluster_count]
 
 
 @task(returns=defaultdict)
@@ -190,11 +206,6 @@ def merge_task_ps_1(*args):
     return border_points
 
 
-@task(returns=list)
-def merge_task_ps_2(*args):
-    return np.vstack([i for i in args])
-
-
 def dict_compss_wait_on(dicc, dimension_perms):
     for comb in itertools.product(*dimension_perms):
         dicc[comb] = compss_wait_on(dicc[comb])
@@ -206,15 +217,20 @@ def orquestrate_sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc,
     # TODO: currently hardcoded
     THRESHOLD = 100
     if (len_neighs/quocient) > THRESHOLD:
-        orquestrate_sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc,
-                                  len_neighs, quocient*2, res*2 + 0,
-                                  fut_list, *args)
-        orquestrate_sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc,
-                                  len_neighs, quocient*2, res*2 + 1,
-                                  fut_list, *args)
+        fut_list = orquestrate_sync_clusters(data, adj_mat, epsilon, coord,
+                                             neigh_sq_loc, len_neighs,
+                                             quocient*2, res*2 + 0, fut_list,
+                                             *args)
+        fut_list = orquestrate_sync_clusters(data, adj_mat, epsilon, coord,
+                                             neigh_sq_loc, len_neighs,
+                                             quocient*2, res*2 + 1, fut_list,
+                                             *args)
+#        orquestrate_sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc,
+#                                  len_neighs, quocient*2, res*2 + 1,
+#                                  fut_list, *args)
     else:
         fut_list.append(sync_clusters(data, adj_mat, epsilon, coord,
-                                      neigh_sq_loc, quocient, res,
+                                      neigh_sq_loc, quocient, res, len_neighs,
                                       *args))
     return fut_list
 
@@ -227,41 +243,35 @@ def merge_task(adj_mat, *args):
             for elem in list_elem:
                 if elem not in adj_mat_copy[num]:
                     adj_mat_copy[num].append(elem)
+    print adj_mat_copy
     return adj_mat_copy
 
 
 @task(returns=list)
 def sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc, quocient,
-                  res, *args):
+                  res, len_neighs, *args):
     # TODO: change *args
     adj_mat_copy = [[] for _ in range(max(adj_mat[0], 1))]
     neigh_data = [np.vstack([i.value[0] for i in args]),
-                  np.concatenate([i.value[1] for i in args])
-    neigh_data = [np.vstack([i.value[0] for num, i in
+                  np.concatenate([i.value[1] for i in args])]
+    neigh_data = [np.vstack([i for num, i in
                              enumerate(neigh_data[0])
                              if ((num % quocient) == res)]),
-                  np.concatenate([i.value[1] for num,i in
-                                  enumerate(neigh_data[1])
-                                  if ((num & quocient) == res)])]
-    # TODO: ja està fet ara resta actuañitzaro tot
-    tmp_unwrap_1 = [i.value[1] for i in args]
-    tmp_neigh_1 = np.array([i for num, i in
-                            enumerate(np.concatenate(tmp_unwrap_1))
-                            if ((num % quocient) == res)])
-    tmp_unwrap_2 = [neigh_sq_loc[i] for i in range(len(neigh_sq_loc))
-                    for j in range(len(args[i].value[1]))]
-    tmp_unwrap_2 = [i for num, i in enumerate(tmp_unwrap_2) if
-                    ((num % quocient) == res)]
+                  np.array([i for num, i in enumerate(neigh_data[1])
+                            if ((num % quocient) == res)])]
+    tmp_unwrap = [neigh_sq_loc[i] for i in range(len(neigh_sq_loc))
+                  for j in range(len(args[i].value[1]))]
+    tmp_unwrap = [i for num, i in enumerate(tmp_unwrap) if
+                  ((num % quocient) == res)]
     for num1, point1 in enumerate(data.value[0]):
         current_clust_id = int(data.value[1][num1])
         if current_clust_id > -1:
-            tmp_vec = (np.linalg.norm(tmp2.value[0]-point1, axis=1) -
+            tmp_vec = (np.linalg.norm(neigh_data[0]-point1, axis=1) -
                        epsilon) < 0
-            for _num, tmp2 in enumerate(tmp_unwrap_1):
-                loc2 = tmp_unwrap_2[_num]
             for num2, poss_neigh in enumerate(tmp_vec):
+                loc2 = tmp_unwrap[num2]
                 if poss_neigh:
-                    clust_ind = int(tmp2.value[1][num2])
+                    clust_ind = int(neigh_data[1][num2])
                     adj_mat_elem = [loc2, clust_ind]
                     if ((clust_ind > -1) and
                         (adj_mat_elem not in
@@ -368,8 +378,8 @@ def DBSCAN(epsilon, min_points, file_id):
         adj_mat[comb] = [0]
         tmp_mat[comb] = [0]
         border_points[comb] = defaultdict(list)
-        fut_list = orquestrate_init_data(dataset_tmp[comb], comb, file_id,
-                                         len_datasets[comb], 1, 0, [])
+        fut_list = orquestrate_init_data(comb, file_id, len_datasets[comb], 1,
+                                         0, [])
         dataset_tmp[comb] = merge_task_init(*fut_list)
         neigh_sq_coord[comb] = neigh_squares_query(comb, epsilon,
                                                    dimensions)
@@ -382,12 +392,13 @@ def DBSCAN(epsilon, min_points, file_id):
         neigh_squares = []
         for coord in neigh_sq_coord[comb]:
             neigh_squares.append(dataset_tmp[coord])
-        fut_list = orquestrate_scan_merge(dataset_tmp[comb], epsilon,
-                                          min_points, len_datasets[coord], 1,
-                                          0, [[], []], *neigh_squares)
-        [dataset[comb], tmp_mat[comb],
-         adj_mat[comb]] = merge_task_ps_0(epsilon, *fut_list[0])
-        border_points[comb] = merge_task_ps_1(*fut_list[1])
+        fut_list_0, fut_list_1 = orquestrate_scan_merge(dataset_tmp[comb],
+                                                        epsilon, min_points,
+                                                        len_datasets[coord],
+                                                        1, 0, [[], []],
+                                                        *neigh_squares)
+        dataset[comb], tmp_mat[comb], adj_mat[comb] = merge_task_ps_0(epsilon, *fut_list_0)
+        border_points[comb] = merge_task_ps_1(*fut_list_1)
 
     # Cluster Synchronisation
     for comb in itertools.product(*dimension_perms):

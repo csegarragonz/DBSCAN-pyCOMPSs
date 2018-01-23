@@ -9,3 +9,6 @@ data/
 
 #Ignore random plot folder
 plot/
+
+#Ignore test files
+test.py

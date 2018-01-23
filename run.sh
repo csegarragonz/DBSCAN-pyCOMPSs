@@ -34,6 +34,7 @@ runcompss \
 #python DBSCAN_4_PyC.py 0.1 10 1
 #runcompss --lang=python ./Gen_Data_DBSCAN.py 3 [100,100]
 #python Gen_Data_DBSCAN.py 1 [10,10]
+#    --debug=true \
 
 #Running on a Cluster with COMPSs installed and all the dependencies.
 #enqueue_compss --lang=python --num_nodes=6 --exec_time=10 --worker_working_dir=gpfs/home/bsc19/bsc19685/tmp/ ./launchDBSCAN.py ./data/blobs.txt 0.015 10 24
