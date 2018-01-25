@@ -166,28 +166,26 @@ def partial_scan_merge(data, epsilon, min_points, quocient, res, *args):
 
 @task(returns=3)
 def merge_task_ps_0(epsilon, *args):
-    # This one is for data type
-    for i in args:
-        print i.value
     data_copy = Data()
     data_copy.value = [np.vstack([i.value[0] for i in args]),
                        np.concatenate([i.value[1] for i in args])]
-    # Cluster the core points found
     print data_copy.value
     cluster_count = 0
-    core_points = [[num, p] for num, p in enumerate(data_copy.value[0]) if
-                   data_copy.value[1][num] == -1]
-    for pos, point in core_points:
-        # TODO: make a one-liner out of this
-        tmp_vec = ((np.linalg.norm(data_copy.value[0]-point, axis=1)-epsilon)
-                   < 0)
-        for num, poss_neigh in enumerate(tmp_vec):
-            if poss_neigh and data_copy.value[1][num] > -1:
-                data_copy.value[1][pos] = data_copy.value[1][num]
-                break
-        else:
-            data_copy.value[1][pos] = cluster_count
-            cluster_count += 1
+    core_points_tmp = [p for num, p in enumerate(data_copy.value[0])
+                                 if data_copy.value[1][num] == -1]
+    if len(core_points_tmp) != 0:
+        core_points_tmp = np.vstack(core_points_tmp)
+        core_points = [[num, p] for num, p in enumerate(core_points_tmp)]
+        for pos, point in core_points:
+            tmp_vec = ((np.linalg.norm(core_points_tmp - point, axis=1)-epsilon)
+                       < 0)
+            for num, poss_neigh in enumerate(tmp_vec):
+                if poss_neigh and data_copy.value[1][num] > -1:
+                    data_copy.value[1][pos] = data_copy.value[1][num]
+                    break
+            else:
+                data_copy.value[1][pos] = cluster_count
+                cluster_count += 1
     return data_copy, [cluster_count], [cluster_count]
 
 
@@ -220,9 +218,6 @@ def orquestrate_sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc,
                                              neigh_sq_loc, len_neighs,
                                              quocient*2, res*2 + 1, fut_list,
                                              *args)
-#        orquestrate_sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc,
-#                                  len_neighs, quocient*2, res*2 + 1,
-#                                  fut_list, *args)
     else:
         fut_list.append(sync_clusters(data, adj_mat, epsilon, coord,
                                       neigh_sq_loc, quocient, res, len_neighs,
