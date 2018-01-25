@@ -10,5 +10,11 @@ data/
 #Ignore random plot folder
 plot/
 
+#Ignore
+.~lock.*
+
+#Ignore useful papers
+papers/
+
 #Ignore test files
 test.py

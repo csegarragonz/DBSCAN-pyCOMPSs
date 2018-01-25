@@ -125,8 +125,6 @@ def orquestrate_scan_merge(data, epsilon, min_points, len_neighs, quocient,
         for num, _list in enumerate(fut_list):
             _list.append(obj[num])
     return fut_list[0], fut_list[1]
-#    Si peta la alternativa mes decent
-#    return fut_list[0], fut_list[1], fut_list[2], fut_list[3], fut_list[4]
 
 
 @task(returns=2)
@@ -164,11 +162,9 @@ def partial_scan_merge(data, epsilon, min_points, quocient, res, *args):
                 non_assigned[num] = tmp
 #    if data_copy.value.shape == (1,0):
     return data_copy, non_assigned
-#    return data, non_assigned
 
 
 @task(returns=3)
-# @task(data_copy=INOUT, tmp_mat=INOUT, adj_mat=INOUT)
 def merge_task_ps_0(epsilon, *args):
     # This one is for data type
     for i in args:
@@ -196,7 +192,6 @@ def merge_task_ps_0(epsilon, *args):
 
 
 @task(returns=defaultdict)
-# @task(border_points=INOUT)
 def merge_task_ps_1(*args):
     # This one is for data type
     border_points = defaultdict(list)
