@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015/TeX Live for SUSE Linux) (preloaded format=pdflatex 2017.10.23)  26 JAN 2018 13:52
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015/TeX Live for SUSE Linux) (preloaded format=pdflatex 2017.10.23)  1 FEB 2018 12:45
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -906,13 +906,13 @@ LaTeX Font Info:    Try loading font information for OT1+pcr on input line 207.
  (/usr/share/texmf/tex/latex/psnfss/ot1pcr.fd
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
 )
-<img/moonsDBSCAN.png, id=151, 462.528pt x 346.896pt>
+<img/moonsDBSCAN.png, id=147, 462.528pt x 346.896pt>
 File: img/moonsDBSCAN.png Graphic file (type png)
  <use img/moonsDBSCAN.png>
 Package pdftex.def Info: img/moonsDBSCAN.png used on input line 212.
 (pdftex.def)             Requested size: 252.94499pt x 189.70827pt.
 
-<img/moonsKMEANS.png, id=153, 462.528pt x 346.896pt>
+<img/moonsKMEANS.png, id=149, 462.528pt x 346.896pt>
 File: img/moonsKMEANS.png Graphic file (type png)
  <use img/moonsKMEANS.png>
 Package pdftex.def Info: img/moonsKMEANS.png used on input line 215.
@@ -924,105 +924,91 @@ LaTeX Warning: Reference `performance' on page 2 undefined on input line 232.
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
 put line 250.
 
-Underfull \hbox (badness 1803) in paragraph at lines 252--253
-[]\OT1/ppl/b/n/9.53561 func-tion \OT1/ppl/m/sc/9.53561 DB-SCAN\OT1/ppl/m/n/9.53
-561 ($\OML/cmm/m/it/10 data[]file$\OT1/ppl/m/n/9.53561 , $\OML/cmm/m/it/10 epsi
-lon$\OT1/ppl/m/n/9.53561 , $\OML/cmm/m/it/10 min[]points$\OT1/ppl/m/n/9.53561 ,
-
+Overfull \hbox (0.59962pt too wide) in paragraph at lines 260--261
+[] $\OML/cmm/m/it/10 f[]clusters \OMS/cmsy/m/n/10   []\OT1/cmr/m/n/10 (\OML/cmm
+/m/it/10 synced[]clusters\OT1/cmr/m/n/10 )$ 
  []
 
-
-Overfull \hbox (7.97414pt too wide) in paragraph at lines 254--255
-[] $\OML/cmm/m/it/10 frag[]data \OMS/cmsy/m/n/10   []\OT1/cmr/m/n/10 (\OML/cmm/
-m/it/10 norm[]data; frag[]size\OT1/cmr/m/n/10 )$ 
- []
-
-[2]
-Overfull \hbox (2.39655pt too wide) in paragraph at lines 296--297
-[]\OT1/ppl/b/n/9.53561 func-tion \OT1/ppl/m/sc/9.53561 par-ti-tion[]space\OT1/p
-pl/m/n/9.53561 ($\OML/cmm/m/it/10 dataset; frag[]size; epsilon$\OT1/ppl/m/n/9.5
-3561 ) 
- []
-
-<img/dibuixEps.png, id=192, 180.675pt x 152.82094pt>
-File: img/dibuixEps.png Graphic file (type png)
- <use img/dibuixEps.png>
-Package pdftex.def Info: img/dibuixEps.png used on input line 321.
-(pdftex.def)             Requested size: 252.94499pt x 213.95015pt.
-
-<img/anim-1.png, id=194, 260.8947pt x 132.9768pt>
+[2] <img/anim-1.png, id=191, 260.8947pt x 132.9768pt>
 File: img/anim-1.png Graphic file (type png)
  <use img/anim-1.png>
-Package pdftex.def Info: img/anim-1.png used on input line 354.
+Package pdftex.def Info: img/anim-1.png used on input line 365.
 (pdftex.def)             Requested size: 252.94499pt x 128.92645pt.
 
-<img/anim-2.png, id=195, 268.1217pt x 126.4725pt>
+<img/anim-2.png, id=192, 268.1217pt x 126.4725pt>
 File: img/anim-2.png Graphic file (type png)
  <use img/anim-2.png>
-Package pdftex.def Info: img/anim-2.png used on input line 357.
+Package pdftex.def Info: img/anim-2.png used on input line 368.
 (pdftex.def)             Requested size: 252.94499pt x 119.31836pt.
 
-<img/anim-3.png, id=196, 258.7266pt x 126.4725pt>
+<img/anim-3.png, id=193, 258.7266pt x 126.4725pt>
 File: img/anim-3.png Graphic file (type png)
  <use img/anim-3.png>
-Package pdftex.def Info: img/anim-3.png used on input line 360.
+Package pdftex.def Info: img/anim-3.png used on input line 371.
 (pdftex.def)             Requested size: 252.94499pt x 123.64886pt.
 
-<img/anim-4.png, id=197, 248.6088pt x 125.7498pt>
+<img/anim-4.png, id=194, 248.6088pt x 125.7498pt>
 File: img/anim-4.png Graphic file (type png)
  <use img/anim-4.png>
-Package pdftex.def Info: img/anim-4.png used on input line 363.
+Package pdftex.def Info: img/anim-4.png used on input line 374.
 (pdftex.def)             Requested size: 252.94499pt x 127.95032pt.
- [3 <./img/moonsDBSCAN.png> <./img/moonsKMEANS.png>]
+
+
+LaTeX Warning: Reference `neigh_retr' on page 3 undefined on input line 380.
+
+[3 <./img/moonsDBSCAN.png> <./img/moonsKMEANS.png>]
 
 LaTeX Warning: Reference `compss_framework' on page 4 undefined on input line 4
-14.
+25.
 
-[4 <./img/dibuixEps.png>]
-<img/complete_graph.pdf, id=224, 3556.28625pt x 847.165pt>
+<img/complete_graph.pdf, id=211, 3556.28625pt x 847.165pt>
 File: img/complete_graph.pdf Graphic file (type pdf)
 
 <use img/complete_graph.pdf>
-Package pdftex.def Info: img/complete_graph.pdf used on input line 420.
+Package pdftex.def Info: img/complete_graph.pdf used on input line 431.
 (pdftex.def)             Requested size: 252.94499pt x 60.25125pt.
+ [4]
 
-<img/test_case1.png, id=231, 148.30406pt x 127.22531pt>
+LaTeX Warning: Reference `partition_space' on page 5 undefined on input line 44
+1.
+
+
+LaTeX Warning: Reference `neigh_retr' on page 5 undefined on input line 441.
+
+<img/test_case1.png, id=224, 148.30406pt x 127.22531pt>
 File: img/test_case1.png Graphic file (type png)
 
 <use img/test_case1.png>
-Package pdftex.def Info: img/test_case1.png used on input line 433.
+Package pdftex.def Info: img/test_case1.png used on input line 444.
 (pdftex.def)             Requested size: 180.67499pt x 155.0011pt.
 
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-<img/test_case2.png, id=234, 219.82124pt x 171.64125pt>
+<img/test_case2.png, id=227, 219.82124pt x 171.64125pt>
 File: img/test_case2.png Graphic file (type png)
 
 <use img/test_case2.png>
-Package pdftex.def Info: img/test_case2.png used on input line 440.
+Package pdftex.def Info: img/test_case2.png used on input line 451.
 (pdftex.def)             Requested size: 180.67499pt x 141.07933pt.
 
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
+[5 <./img/anim-1.png> <./img/anim-2.png> <./img/anim-3.png> <./img/anim-4.png> 
+<./img/complete_graph.pdf> <./img/test_case1.png>]
 
-Underfull \vbox (badness 10000) has occurred while \output is active []
-
- [5 <./img/anim-1.png> <./img/anim-2.png> <./img/anim-3.png> <./img/anim-4.png>
- <./img/complete_graph.pdf> <./img/test_case1.png>]
-
-LaTeX Warning: Reference `the_machine' on page 6 undefined on input line 468.
+LaTeX Warning: Reference `the_machine' on page 6 undefined on input line 479.
 
 
-Underfull \hbox (badness 1596) in paragraph at lines 468--469
+Underfull \hbox (badness 1596) in paragraph at lines 479--480
 \OT1/ppl/m/n/9.53561 To eval-u-ate the al-go-rithm's per-for-mance for dif-fer-
 ent
  []
 
-LaTeX Font Info:    Calculating math sizes for size <8.03> on input line 474.
+LaTeX Font Info:    Calculating math sizes for size <8.03> on input line 485.
 
-Underfull \hbox (badness 10000) in alignment at lines 474--487
+Underfull \hbox (badness 10000) in alignment at lines 485--498
 [][][][][][][][][][][] 
  []
 
@@ -1031,34 +1017,43 @@ PGFPlots: reading {data/20k.dat}
 PGFPlots: reading {data/50k.dat}
 PGFPlots: reading {data/100k.dat}
 PGFPlots: reading {data/200k.dat}
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
 PGFPlots: reading {data/10kRT.dat}
 PGFPlots: reading {data/20kRT.dat}
 PGFPlots: reading {data/50kRT.dat}
 PGFPlots: reading {data/100kRT.dat}
 PGFPlots: reading {data/200kRT.dat}
-[6 <./img/test_case2.png>]
-<img/traca_compacte.png, id=277, 817.55438pt x 234.1247pt>
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+<img/traca_compacte.png, id=260, 817.55438pt x 234.1247pt>
 File: img/traca_compacte.png Graphic file (type png)
 
 <use img/traca_compacte.png>
-Package pdftex.def Info: img/traca_compacte.png used on input line 558.
+Package pdftex.def Info: img/traca_compacte.png used on input line 569.
 (pdftex.def)             Requested size: 252.94499pt x 72.435pt.
 
-<img/traca_mes_caca.png, id=281, 819.06pt x 251.43938pt>
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[6 <./img/test_case2.png>]
+<img/traca_mes_caca.png, id=274, 819.06pt x 251.43938pt>
 File: img/traca_mes_caca.png Graphic file (type png)
 
 <use img/traca_mes_caca.png>
-Package pdftex.def Info: img/traca_mes_caca.png used on input line 567.
+Package pdftex.def Info: img/traca_mes_caca.png used on input line 578.
 (pdftex.def)             Requested size: 252.94499pt x 77.64996pt.
- [7 <./img/traca_compacte.png (PNG copy)> <./img/traca_mes_caca.png (PNG copy)>
-]
-Overfull \hbox (1.28859pt too wide) in alignment at lines 605--616
+
+Overfull \hbox (1.28859pt too wide) in alignment at lines 616--627
 [][][][][][][][][][][] 
  []
 
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
+[7 <./img/traca_compacte.png (PNG copy)> <./img/traca_mes_caca.png (PNG copy)>]
 Missing character: There is no â in font pplr7t!
 Missing character: There is no € in font pplr7t!
 Missing character: There is no “ in font pplr7t!
@@ -1068,28 +1063,24 @@ Missing character: There is no “ in font pplr7t!
 Missing character: There is no Ã in font pplr7t!
 Missing character: There is no º in font pplr7t!
 [8]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 729.
- [9]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 729.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 740.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 740.
  (./main.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 729.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 729.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 740.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 740.
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: 42D1A661C973A692483935702A0AEADD;1972.
+(rerunfilecheck)             Checksum: C6E136853B97B08A3CE1E19F5718415D;1868.
 
 
 LaTeX Warning: There were undefined references.
 
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 729.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 740.
  ) 
 Here is how much of TeX's memory you used:
- 28939 strings out of 493091
- 665559 string characters out of 6142991
- 876946 words of memory out of 5000000
- 31844 multiletter control sequences out of 15000+600000
+ 28965 strings out of 493091
+ 666179 string characters out of 6142991
+ 877266 words of memory out of 5000000
+ 31873 multiletter control sequences out of 15000+600000
  54874 words of font info for 119 fonts, out of 8000000 for 9000
  1144 hyphenation exceptions out of 8191
  57i,19n,103p,1739b,2260s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -1106,10 +1097,10 @@ palatino/uplb8a.pfb></usr/share/texmf/fonts/type1/urw/palatino/uplbi8a.pfb></us
 r/share/texmf/fonts/type1/urw/palatino/uplr8a.pfb></usr/share/texmf/fonts/type1
 /urw/palatino/uplri8a.pfb></usr/share/texmf/fonts/type1/urw/times/utmr8a.pfb></
 usr/share/texmf/fonts/type1/urw/zapfding/uzdr.pfb>
-Output written on main.pdf (9 pages, 513058 bytes).
+Output written on main.pdf (8 pages, 509407 bytes).
 PDF statistics:
- 384 PDF objects out of 1000 (max. 8388607)
- 329 compressed objects within 4 object streams
- 79 named destinations out of 1000 (max. 500000)
- 289 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 372 PDF objects out of 1000 (max. 8388607)
+ 320 compressed objects within 4 object streams
+ 77 named destinations out of 1000 (max. 500000)
+ 276 words of extra memory for PDF output out of 10000 (max. 10000000)
 

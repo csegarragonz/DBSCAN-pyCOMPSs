@@ -57,30 +57,27 @@
 \@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {Clusters found by k-means.}}}{3}{subfigure.1.2}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Step-by-Step analysis}{3}{subsection.4.1}}
 \newlabel{step_by_step}{{4.1}{3}{Step-by-Step analysis}{subsection.4.1}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.1}Data Pre-Processing}{3}{subsubsection.4.1.1}}
-\newlabel{data_pre_process}{{4.1.1}{3}{Data Pre-Processing}{subsubsection.4.1.1}{}}
-\newlabel{alg:normData}{{2}{3}{Data Pre-Processing}{algorithm.2}{}}
-\@writefile{loa}{\contentsline {algorithm}{\numberline {2}{\ignorespaces Given a dataset, divide each dimension by its maximum value }}{3}{algorithm.2}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.2}Adaptative Partitioning}{3}{subsubsection.4.1.2}}
-\newlabel{partition_space}{{4.1.2}{3}{Adaptative Partitioning}{subsubsection.4.1.2}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.3}Initial Neighbor Retrieval}{3}{subsubsection.4.1.3}}
-\newlabel{neigh_retr}{{4.1.3}{3}{Initial Neighbor Retrieval}{subsubsection.4.1.3}{}}
-\newlabel{alg:partitionData}{{3}{3}{Adaptative Partitioning}{algorithm.3}{}}
-\@writefile{loa}{\contentsline {algorithm}{\numberline {3}{\ignorespaces Return a space partition basing on point density }}{3}{algorithm.3}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.4}Cluster Synchronization}{3}{subsubsection.4.1.4}}
-\newlabel{cluster_sync}{{4.1.4}{3}{Cluster Synchronization}{subsubsection.4.1.4}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces In darker red the square where the point belongs, in lighter red the squares where the algorithm will look for possible neighbors.}}{4}{figure.2}}
-\newlabel{fig:query}{{2}{4}{In darker red the square where the point belongs, in lighter red the squares where the algorithm will look for possible neighbors}{figure.2}{}}
-\newlabel{alg:partialScan}{{4}{4}{Initial Neighbor Retrieval}{algorithm.4}{}}
-\@writefile{loa}{\contentsline {algorithm}{\numberline {4}{\ignorespaces Looks for all the core points in a certain square}}{4}{algorithm.4}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.5}Cluster Expansion}{4}{subsubsection.4.1.5}}
-\newlabel{cluster_exp}{{4.1.5}{4}{Cluster Expansion}{subsubsection.4.1.5}{}}
-\newlabel{alg:syncClusters}{{5}{4}{Cluster Synchronization}{algorithm.5}{}}
-\@writefile{loa}{\contentsline {algorithm}{\numberline {5}{\ignorespaces Returns an adjacency matrix }}{4}{algorithm.5}}
-\newlabel{alg:expandClusters}{{6}{4}{Cluster Expansion}{algorithm.6}{}}
-\@writefile{loa}{\contentsline {algorithm}{\numberline {6}{\ignorespaces Expands all clusters from the list }}{4}{algorithm.6}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Dependency Graph}{4}{subsection.4.2}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.1}Data Loading}{3}{subsubsection.4.1.1}}
+\newlabel{data_pre_process}{{4.1.1}{3}{Data Loading}{subsubsection.4.1.1}{}}
+\newlabel{recursive_approach}{{4.1.1}{3}{A recursive approach to tackle load balancing}{section*.1}{}}
+\newlabel{alg:rec-approach}{{2}{3}{A recursive approach to tackle load balancing}{algorithm.2}{}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {2}{\ignorespaces Limit the number of points processed by the same task. }}{3}{algorithm.2}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.2}Partial Scan}{3}{subsubsection.4.1.2}}
+\newlabel{sec:partial-scan}{{4.1.2}{3}{Partial Scan}{subsubsection.4.1.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.3}Cluster Synchronization}{3}{subsubsection.4.1.3}}
+\newlabel{cluster_sync}{{4.1.3}{3}{Cluster Synchronization}{subsubsection.4.1.3}{}}
 \citation{ReferencePaper}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces }}{4}{figure.2}}
+\newlabel{fig:neigh-loc}{{2}{4}{}{figure.2}{}}
+\newlabel{alg:partialScan}{{3}{4}{Partial Scan}{algorithm.3}{}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {3}{\ignorespaces Looks for all the core points in a certain square}}{4}{algorithm.3}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.4}Cluster Expansion}{4}{subsubsection.4.1.4}}
+\newlabel{cluster_exp}{{4.1.4}{4}{Cluster Expansion}{subsubsection.4.1.4}{}}
+\newlabel{alg:syncClusters}{{4}{4}{Cluster Synchronization}{algorithm.4}{}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {4}{\ignorespaces Returns an adjacency matrix }}{4}{algorithm.4}}
+\newlabel{alg:expandClusters}{{5}{4}{Cluster Expansion}{algorithm.5}{}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {5}{\ignorespaces Expands all clusters from the list }}{4}{algorithm.5}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Dependency Graph}{4}{subsection.4.2}}
 \newlabel{fig_f_case}{{3a}{5}{Subfigure 3a}{subfigure.3.1}{}}
 \newlabel{sub@fig_f_case}{{(a)}{a}{Subfigure 3a\relax }{subfigure.3.1}{}}
 \newlabel{fig_s_case}{{3b}{5}{Subfigure 3b}{subfigure.3.2}{}}
@@ -100,10 +97,10 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.3}About equivalence}{5}{subsection.4.3}}
 \@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces A cluster divided by the chunking process.}}{5}{figure.5}}
 \newlabel{test_case1}{{5}{5}{A cluster divided by the chunking process}{figure.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Evaluation}{5}{section.5}}
+\newlabel{sec:performance}{{5}{5}{Evaluation}{section.5}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Cluster linked by a non-core point.}}{6}{figure.6}}
 \newlabel{test_case2}{{6}{6}{Cluster linked by a non-core point}{figure.6}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Evaluation}{6}{section.5}}
-\newlabel{sec:performance}{{5}{6}{Evaluation}{section.5}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Infrastructure}{6}{subsection.5.1}}
 \newlabel{subsec:infrastructure}{{5.1}{6}{Infrastructure}{subsection.5.1}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Runtime Metrics}{6}{subsection.5.2}}
@@ -138,12 +135,12 @@
 \bibcite{kmeans}{8}
 \bibcite{pycompss}{9}
 \bibcite{toolsDBSCAN}{10}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Execution time comparison with the same number of CPUs but different number of workers and different CPUs per node. Time measured in seconds.}}{8}{table.2}}
+\newlabel{cpusComparison}{{2}{8}{Execution time comparison with the same number of CPUs but different number of workers and different CPUs per node. Time measured in seconds}{table.2}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Evolution of time elapsed with a fixed number of workers. 16 CPUs per node. }}{8}{figure.11}}
 \newlabel{timeComplexity1}{{11}{8}{Evolution of time elapsed with a fixed number of workers. 16 CPUs per node}{figure.11}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces Evolution of time elapsed with a fixed number of workers. 48 CPUs per node.}}{8}{figure.12}}
 \newlabel{timeComplexity2}{{12}{8}{Evolution of time elapsed with a fixed number of workers. 48 CPUs per node}{figure.12}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Further Development and Improvement Proposals}{8}{subsection.6.1}}
 \newlabel{further_development}{{6.1}{8}{Further Development and Improvement Proposals}{subsection.6.1}{}}
-\@writefile{toc}{\contentsline {section}{References}{8}{section*.2}}
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Execution time comparison with the same number of CPUs but different number of workers and different CPUs per node. Time measured in seconds.}}{9}{table.2}}
-\newlabel{cpusComparison}{{2}{9}{Execution time comparison with the same number of CPUs but different number of workers and different CPUs per node. Time measured in seconds}{table.2}{}}
+\@writefile{toc}{\contentsline {section}{References}{8}{section*.3}}

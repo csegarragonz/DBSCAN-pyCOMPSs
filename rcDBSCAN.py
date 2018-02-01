@@ -187,18 +187,17 @@ def partial_scan_merge(data, epsilon, min_points, quocient, res, *args):
 #                 args[i] = merge_task_ps_0(epsilon, args[i], args[i+2**k])
 
 
-@task(returns=2)
+@task(returns=3)
 def merge_task_ps_0(*args):
     num_clust_max = max([i for i in args[0].value[1]])+1
     data = args[0]
     for i in range(len(args)-1):
         data.value = [np.vstack([data.value[0], args[i+1].value[0]]),
-                      np.concatenate([data.value[1], [i + num_clust_max if
-                                                      i > -1 else i for i in
+                      np.concatenate([data.value[1], [j + num_clust_max if
+                                                      j > -1 else j for j in
                                                       args[i+1].value[1]]])]
-        num_clust_max = max(max([i for i in args[i+1].value[1]])+1,
-                            num_clust_max)
-    return data, [num_clust_max], [num_clust_max]
+        num_clust_max += max(max([j for j in args[i+1].value[1]])+1, 0)
+    return data, [int(num_clust_max)], [int(num_clust_max)]
 
 #    def apply_mask(val, deep_inside):
 #        if deep_inside:
@@ -206,7 +205,6 @@ def merge_task_ps_0(*args):
 #        return val == i
 #    apply_mask_vec = np.vectorize(apply_mask)
 #
-#    # Primer: prenc el màxim de cada dada per saber el nombre de clusters
 #    # Segon: per cada parell de clusters trobats miro si  els puc juntar
 #    n_clust_1 = max([i for i in data_1.value[1]])
 #    n_clust_2 = max([i for i in data_2.value[1]])
@@ -439,9 +437,8 @@ def DBSCAN(epsilon, min_points, file_id):
                                                         1, 0, [[], []],
                                                         *neigh_squares)
         # De moment podria no pasarli el cluster count de cada un i buscarlo
-        # cada vegada que cridi fen un màxim (lineal)
         dataset[comb], tmp_mat[comb], adj_mat[comb] = merge_task_ps_0(*fut_list_0)
-        border_points[comb] = merge_task_ps_1(*f_l_3)
+        border_points[comb] = merge_task_ps_1(*fut_list_1)
 
     # Cluster Synchronisation
     for comb in itertools.product(*dimension_perms):

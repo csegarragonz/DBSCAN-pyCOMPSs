@@ -94,7 +94,7 @@
 
 \begin{document}
 
-\title{DBSCAN for PyCOMPSi\\ \LARGE{A distributed approach}}
+\title{DBSCAN for PyCOMPS\\ \LARGE{A distributed approach}}
 
 \author{Carlos~Segarra \\ 
 \href{mailto:carlos.segarra@bsc.es}{carlos.segarra@bsc.es}}
@@ -249,78 +249,89 @@ The algorithm implemented is a reinterpretation of the one exposed in \cite{Refe
 \begin{algorithm}
   \caption{Main method for the DBSCAN algorithm. \label{alg:main}}
   \begin{algorithmic}[1]
-    \Function{DBSCAN}{$data\_file$, $epsilon$, $min\_points$, $frag\_size$}
-    	\State $norm\_data \gets \text{normalize\_data}(data\_file)$
-		\State $frag\_data \gets \text{partition\_space}(norm\_data, frag\_size)$
+    \Function{DBSCAN}{$data\_file$, $epsilon$, $min\_points$}
         \ForAll{$square$ \textbf{in} $frag\_data$}
-            \State \begin{varwidth}[t]{\linewidth}
-            	$core\_points \gets \text{partial\_scan}(square, epsilon, $ \par
-                	\hskip\algorithmicindent $min\_points, frag\_data)$ \par
-                $clusters[square] \gets \text{merge\_cluster}(core\_points,$ \par 
-                \hskip\algorithmicindent $epsilon)$
-            \end{varwidth} 
-     	\EndFor
-        \State $clusters = \text{compss\_wait\_on}(clusters)$
-        \State $clusters\_links = sync\_clusters(clusters)$
-        \State $clusters = \text{update}(clusters, clusters\_links)$
-        \State $\textbf{return} \text{expand\_clusters}(clusters)$
+            \State $frag\_data \gets \text{load\_data}(data\_file\_system)$
+            \State $local\_clusters \gets \text{partial\_scan}(frag\_data)$
+            \State $syn\_clusters \gets \text{sync\_clusters}(local\_clusters)$
+        \EndFor
+        \State $frag\_data \gets \text{compss\_wait\_on}(frag\_data)$
+        \ForAll{$square$ \textbf{in} $frag\_data$}
+            \State $f\_clusters \gets \text{expand\_clusters} (synced\_clusters)$
+        \EndFor
+        \State $ \text{update\_labels} (frag\_data, f\_clusters)$
+        \State $\textbf{return} \hspace{5pt} 1$
     \EndFunction
   \end{algorithmic}
 \end{algorithm}
-where the \texttt{update} method finds the connected components of a graph given its adjacency matrix (using an MF-Set) and merges the corresponding clusters.
+
+Note that all the methods executed within the loop statements include the \texttt{@task} decorator and therefore can potentially run in parallel. Following along, this general scheme is to be divided and each different step analysed.
 
 \subsection{Step-by-Step analysis} \label{step_by_step}
 
-\subsubsection{Data Pre-Processing} \label{data_pre_process}
-Firstly, data is normalized by dividing each axis by the maximum value along it. This is done to prevent different factors from being really unbalanced and to ease the input parameters choice.
+\subsubsection{Data Loading} \label{data_pre_process}
+It is important to bear in mind the punctualisation from the section above: data is assumed to be normalised (each feature of each point belonging to the interval $[0,1]$) and distributed in a file system grid-shaped. This is, if for instance the points are two-dimensional, a possible distribution would consist in the following files: \texttt{data\_0\_0.txt}, \texttt{data\_0\_1.txt}, \dots, \texttt{data\_0\_9.txt}, \texttt{data\_1\_0.txt}, \dots, \texttt{data\_9\_9.txt}. Where a point belongs to a file if each feature's first decimal position matches the file name. Were the files to be too big, two decimal places could be used as an identifier. Note that having multiples of a 100 files eases an hypothetical pre-processement if all the data was given in a single, gigantic, file.
+
+The aim of this method is to read the data belongig to a cube in our space grid, a file in the file system, and load it to memory. When doing so, each point is given a cluster id. It will be really common throughout the whole implementation to follow a recursive approach within a single task to tackle possible load imbalacments. It is such a usual practice that it is worth introducing a generic explanation.
+
+\subsubsection*{A recursive approach to tackle load balancing} \label{recursive_approach}
+The starting problem is a task that has as an input data file that can be arbitrarily big. This will cause an imbalancement in the tasks length and a decrease in the overall performance and speedup of the algorithm. It is easy to know the length of the data file and, with a simple recursive orquestrator, run tasks over chunks of the data file with a limited number of points (\texttt{THRESHOLD}). The generic structure would be that of Algorithm \ref{alg:rec-approach}. Note that \texttt{orquestrate\_task} is not a \texttt{@task} and is therefore executed by the master thread whilst \texttt{task} is indeed and will be executed by a worker.
 
 \begin{algorithm}
-  \caption{Given a dataset, divide each dimension by its maximum value \label{alg:normData}}
+  \caption{Limit the number of points processed by the same task. \label{alg:rec-approach}}
   \begin{algorithmic}[1]
-    \Function{normalize\_data}{$data\_file$}
-		\State $data \gets \text{load}(data\_file)$
-        \ForAll{dimensions of $data$}
-       		\State Divide by th maximum along its axis
-     	\EndFor
-        \State \textbf{return} \text{save}($data$)
+    \Function{orquestrate\_task}{$data\_file, q=1, r=0$}
+        \State $THRESHOLD = TH\_VALUE$
+        \If{$\text{len}(data\_file)/q \geq TH\_VALUE$}
+        \State $out = \text{orquestrate\_task}(data\_file, 2*q, 0)$
+        \State $out = \text{orquestrate\_task}(data\_file, 2*q, 1)$
+        \Else
+        \State $out = \text{task}(data\_file, q, r)$
+        \EndIf
+        \State \textbf{return} $out$
     \EndFunction
   \end{algorithmic}
 \end{algorithm}
 
-\subsubsection{Adaptative Partitioning} \label{partition_space} 
-Secondly, the dataset is partitioned depending on the point density. Initially the three partitioning points among each axis are the minimum value, the arithmetic mean and the maximum value, these values are stored in \texttt{fragVec}. Iteratively, an additional point is added in the middle of the interval containing the higher amount of points, this is done \texttt{fragSize} times along each dimension. By performing this partition, excessive unbalancing of points per square can be avoided. Once this step is finished, the dataset is stored in a dictionary where the key is a unique identifier of each spatial region and the value is a list containing all the points in that region.
+Back to the data initialisation, for each data file, an orquestration following the structure stated in \ref{recursive_approach} is performed upon the length of each data file with a threshold value of approximately 1 \% of the number of points in the dataset. For each chunk then the data is loaded to a Python object and the cluster id's initially set to noise level.
 
-\begin{algorithm}
-  \caption{Return a space partition basing on point density \label{alg:partitionData}}
-  \begin{algorithmic}[1]
-    \Function{partition\_space}{$dataset, frag\_size, epsilon$}
-		\State Set $dimension, fragVec$ 
-        
-        \ForAll{dimensions of $data$}
-        
-        	\For{$i \gets 1, frag\_size$}
-            	\ForAll{$p$ \textbf{in} $dataset$}
-                
-       				\State Find most dense interval.
-                \EndFor
-                \State Divide that interval in two.
-        	\EndFor
-     	\EndFor
-        \State \textbf{return} \text{save}($data$)
-    \EndFunction
-  \end{algorithmic}
-\end{algorithm}
-
-Due to the theoretical possible large amount of points per cluster, an extra scale parameter is added (\texttt{num\_parts}), each worker will be assigned to a \texttt{num\_parts} part of each square resulting of the partition.
-
-\subsubsection{Initial Neighbor Retrieval} \label{neigh_retr} 
-Once the dataset is correctly split, each worker performs a core point retrieval, please note \emph{core points} retrieval. To optimize this query, each worker knows which square he has been assigned to and consequently only looks for possible neighbors in all the adjacent squares within $\varepsilon$ distance. The query structure is the one presented in Figure \ref{fig:query}. All the points from the squares reachable with $\varepsilon$ distance from the square where the point is are considered as possible neighbors. If a point has over \texttt{min\_points} neighbors then it is considered a core point.
+\subsubsection{Partial Scan} \label{sec:partial-scan}
+The aim of this method is to find core points, i.e points with over $min\_points$ neighbors and make clusters of them. For each cube in our initial grid, known the grid size and $\varepsilon$ it is possible to quickly determin the number of neighbour cubes necessary to correctly identify all the core points within our goal refgion. In Figure \ref{fig:neigh-loc},
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=3.5in]{img/dibuixEps.png}
-\caption{In darker red the square where the point belongs, in lighter red the squares where the algorithm will look for possible neighbors.}
-\label{fig:query}
+\begin{tikzpicture}[every node/.style={minimum size=1cm-\pgflinewidth, outer sep=0pt}]
+    \draw[step=1cm, color=black, dashed] (-2.5,-2.5) grid (3.5,3.5);
+    \node[fill=blue!20] at (0.5, 0.5) {};
+    \node[fill=gray!20] at (1.5, 1.5) {};
+    \node[fill=gray!20] at (2.5, 1.5) {};
+    \node[fill=gray!20] at (-1.5, 1.5) {};
+    \node[fill=gray!20] at (-0.5, 1.5) {};
+    \node[fill=gray!20] at (0.5, 1.5) {};
+    \node[fill=gray!20] at (0.5, 2.5) {};
+    \node[fill=gray!20] at (0.5, -1.5) {};
+    \node[fill=gray!20] at (0.5, -0.5) {};
+    \node[fill=gray!20] at (-0.5, 0.5) {};
+    \node[fill=gray!20] at (-1.5, 0.5) {};
+    \node[fill=gray!20] at (-0.5, -0.5) {};
+    \node[fill=gray!20] at (-1.5, -0.5) {};
+    \node[fill=gray!20] at (-0.5, -1.5) {};
+    \node[fill=gray!20] at (-1.5, -1.5) {};
+    \node[fill=gray!20] at (1.5, 0.5) {};
+    \node[fill=gray!20] at (2.5, 0.5) {};
+    \node[fill=gray!20] at (1.5, -0.5) {};
+    \node[fill=gray!20] at (2.5, -0.5) {};
+    \node[fill=gray!20] at (1.5, -1.5) {};
+    \node[fill=gray!20] at (2.5, -1.5) {};
+    \node[fill=gray!20] at (2.5, 2.5) {};
+    \node[fill=gray!20] at (1.5, 2.5) {};
+    \node[fill=gray!20] at (-1.5, 2.5) {};
+    \node[fill=gray!20] at (-0.5, 2.5) {};
+
+    \draw[<->, thick, red] (1, 0.2) -- (2.5, 0.2) node[midway, above] {\vspace{-5pt} $\varepsilon$};
+    \draw[thick, red, dashed] (-1.5, -1.5) rectangle (2.5, 2.5);
+\end{tikzpicture}
+\caption{\label{fig:neigh-loc}}
 \end{figure}
 
 With this core points, a first cluster proposal is made (a cluster is a subset of the points assigned to that worker, however each worker has access to its neighbor squares' points to determine whether a point neighborhood contains enough people). In the example of Figure \ref{fig_clustering}, \texttt{num\_parts} has been fixed to 1 so that each square is assigned to one and only one worker, otherwise intermediate results would be difficult to visually understand.
