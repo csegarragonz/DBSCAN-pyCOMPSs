@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015/TeX Live for SUSE Linux) (preloaded format=pdflatex 2017.10.23)  1 FEB 2018 12:45
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015/TeX Live for SUSE Linux) (preloaded format=pdflatex 2017.10.23)  2 FEB 2018 18:25
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -906,109 +906,58 @@ LaTeX Font Info:    Try loading font information for OT1+pcr on input line 207.
  (/usr/share/texmf/tex/latex/psnfss/ot1pcr.fd
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
 )
-<img/moonsDBSCAN.png, id=147, 462.528pt x 346.896pt>
+<img/moonsDBSCAN.png, id=143, 462.528pt x 346.896pt>
 File: img/moonsDBSCAN.png Graphic file (type png)
  <use img/moonsDBSCAN.png>
 Package pdftex.def Info: img/moonsDBSCAN.png used on input line 212.
 (pdftex.def)             Requested size: 252.94499pt x 189.70827pt.
 
-<img/moonsKMEANS.png, id=149, 462.528pt x 346.896pt>
+<img/moonsKMEANS.png, id=145, 462.528pt x 346.896pt>
 File: img/moonsKMEANS.png Graphic file (type png)
  <use img/moonsKMEANS.png>
 Package pdftex.def Info: img/moonsKMEANS.png used on input line 215.
 (pdftex.def)             Requested size: 252.94499pt x 189.70827pt.
 
 
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
 LaTeX Warning: Reference `performance' on page 2 undefined on input line 232.
 
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
 put line 250.
-
-Overfull \hbox (0.59962pt too wide) in paragraph at lines 260--261
-[] $\OML/cmm/m/it/10 f[]clusters \OMS/cmsy/m/n/10   []\OT1/cmr/m/n/10 (\OML/cmm
-/m/it/10 synced[]clusters\OT1/cmr/m/n/10 )$ 
- []
-
-[2] <img/anim-1.png, id=191, 260.8947pt x 132.9768pt>
-File: img/anim-1.png Graphic file (type png)
- <use img/anim-1.png>
-Package pdftex.def Info: img/anim-1.png used on input line 365.
-(pdftex.def)             Requested size: 252.94499pt x 128.92645pt.
-
-<img/anim-2.png, id=192, 268.1217pt x 126.4725pt>
-File: img/anim-2.png Graphic file (type png)
- <use img/anim-2.png>
-Package pdftex.def Info: img/anim-2.png used on input line 368.
-(pdftex.def)             Requested size: 252.94499pt x 119.31836pt.
-
-<img/anim-3.png, id=193, 258.7266pt x 126.4725pt>
-File: img/anim-3.png Graphic file (type png)
- <use img/anim-3.png>
-Package pdftex.def Info: img/anim-3.png used on input line 371.
-(pdftex.def)             Requested size: 252.94499pt x 123.64886pt.
-
-<img/anim-4.png, id=194, 248.6088pt x 125.7498pt>
-File: img/anim-4.png Graphic file (type png)
- <use img/anim-4.png>
-Package pdftex.def Info: img/anim-4.png used on input line 374.
-(pdftex.def)             Requested size: 252.94499pt x 127.95032pt.
+[2]
+LaTeX Font Info:    Calculating math sizes for size <8.03> on input line 334.
 
 
-LaTeX Warning: Reference `neigh_retr' on page 3 undefined on input line 380.
+LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 [3 <./img/moonsDBSCAN.png> <./img/moonsKMEANS.png>]
 
-LaTeX Warning: Reference `compss_framework' on page 4 undefined on input line 4
-25.
-
-<img/complete_graph.pdf, id=211, 3556.28625pt x 847.165pt>
-File: img/complete_graph.pdf Graphic file (type pdf)
-
-<use img/complete_graph.pdf>
-Package pdftex.def Info: img/complete_graph.pdf used on input line 431.
-(pdftex.def)             Requested size: 252.94499pt x 60.25125pt.
- [4]
-
-LaTeX Warning: Reference `partition_space' on page 5 undefined on input line 44
-1.
-
-
-LaTeX Warning: Reference `neigh_retr' on page 5 undefined on input line 441.
-
-<img/test_case1.png, id=224, 148.30406pt x 127.22531pt>
-File: img/test_case1.png Graphic file (type png)
-
-<use img/test_case1.png>
-Package pdftex.def Info: img/test_case1.png used on input line 444.
-(pdftex.def)             Requested size: 180.67499pt x 155.0011pt.
-
-
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-<img/test_case2.png, id=227, 219.82124pt x 171.64125pt>
-File: img/test_case2.png Graphic file (type png)
+[4]
 
-<use img/test_case2.png>
-Package pdftex.def Info: img/test_case2.png used on input line 451.
-(pdftex.def)             Requested size: 180.67499pt x 141.07933pt.
+LaTeX Warning: Reference `alg:expand-cluster' on page 5 undefined on input line
+ 474.
 
 
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-[5 <./img/anim-1.png> <./img/anim-2.png> <./img/anim-3.png> <./img/anim-4.png> 
-<./img/complete_graph.pdf> <./img/test_case1.png>]
-
-LaTeX Warning: Reference `the_machine' on page 6 undefined on input line 479.
+Overfull \hbox (10.89919pt too wide) in paragraph at lines 491--492
+[] $\OML/cmm/m/it/10 square[]data[]id \OMS/cmsy/m/n/10   []\OT1/cmr/m/n/10 (\OM
+L/cmm/m/it/10 square[]data[]id; mappings\OT1/cmr/m/n/10 )$ 
+ []
 
 
-Underfull \hbox (badness 1596) in paragraph at lines 479--480
+LaTeX Warning: Reference `the_machine' on page 5 undefined on input line 518.
+
+
+Underfull \hbox (badness 1596) in paragraph at lines 518--519
 \OT1/ppl/m/n/9.53561 To eval-u-ate the al-go-rithm's per-for-mance for dif-fer-
 ent
  []
 
-LaTeX Font Info:    Calculating math sizes for size <8.03> on input line 485.
-
-Underfull \hbox (badness 10000) in alignment at lines 485--498
+[5]
+Underfull \hbox (badness 10000) in alignment at lines 524--537
 [][][][][][][][][][][] 
  []
 
@@ -1017,90 +966,83 @@ PGFPlots: reading {data/20k.dat}
 PGFPlots: reading {data/50k.dat}
 PGFPlots: reading {data/100k.dat}
 PGFPlots: reading {data/200k.dat}
-
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
 PGFPlots: reading {data/10kRT.dat}
 PGFPlots: reading {data/20kRT.dat}
 PGFPlots: reading {data/50kRT.dat}
 PGFPlots: reading {data/100kRT.dat}
 PGFPlots: reading {data/200kRT.dat}
-
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-<img/traca_compacte.png, id=260, 817.55438pt x 234.1247pt>
+<img/traca_compacte.png, id=230, 817.55438pt x 234.1247pt>
 File: img/traca_compacte.png Graphic file (type png)
 
 <use img/traca_compacte.png>
-Package pdftex.def Info: img/traca_compacte.png used on input line 569.
+Package pdftex.def Info: img/traca_compacte.png used on input line 608.
 (pdftex.def)             Requested size: 252.94499pt x 72.435pt.
 
-
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-[6 <./img/test_case2.png>]
-<img/traca_mes_caca.png, id=274, 819.06pt x 251.43938pt>
+<img/traca_mes_caca.png, id=234, 819.06pt x 251.43938pt>
 File: img/traca_mes_caca.png Graphic file (type png)
 
 <use img/traca_mes_caca.png>
-Package pdftex.def Info: img/traca_mes_caca.png used on input line 578.
+Package pdftex.def Info: img/traca_mes_caca.png used on input line 617.
 (pdftex.def)             Requested size: 252.94499pt x 77.64996pt.
-
-Overfull \hbox (1.28859pt too wide) in alignment at lines 616--627
+ [6 <./img/traca_compacte.png (PNG copy)> <./img/traca_mes_caca.png (PNG copy)>
+]
+Overfull \hbox (1.28859pt too wide) in alignment at lines 655--666
 [][][][][][][][][][][] 
  []
 
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-[7 <./img/traca_compacte.png (PNG copy)> <./img/traca_mes_caca.png (PNG copy)>]
 Missing character: There is no â in font pplr7t!
 Missing character: There is no € in font pplr7t!
 Missing character: There is no “ in font pplr7t!
 Missing character: There is no â in font pplr7t!
 Missing character: There is no € in font pplr7t!
 Missing character: There is no “ in font pplr7t!
+[7]
 Missing character: There is no Ã in font pplr7t!
 Missing character: There is no º in font pplr7t!
-[8]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 740.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 740.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 779.
+ [8
+
+]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 779.
  (./main.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 740.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 740.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 779.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 779.
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: C6E136853B97B08A3CE1E19F5718415D;1868.
+(rerunfilecheck)             Checksum: C7F9DC40638AD56859BF0CF958FB8C6D;1800.
 
 
 LaTeX Warning: There were undefined references.
 
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 740.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 779.
  ) 
 Here is how much of TeX's memory you used:
- 28965 strings out of 493091
- 666179 string characters out of 6142991
- 877266 words of memory out of 5000000
- 31873 multiletter control sequences out of 15000+600000
+ 28926 strings out of 493091
+ 665547 string characters out of 6142991
+ 874928 words of memory out of 5000000
+ 31848 multiletter control sequences out of 15000+600000
  54874 words of font info for 119 fonts, out of 8000000 for 9000
  1144 hyphenation exceptions out of 8191
- 57i,19n,103p,1739b,2260s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 57i,19n,103p,1271b,2260s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/share/texmf/fonts/enc/dvips/base/8r.enc}</usr/share/texmf/fonts/type1/p
 ublic/amsfonts/cm/cmmi10.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/c
-mmi7.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share
-/texmf/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/share/texmf/fonts/type1/pu
-blic/amsfonts/cm/cmr8.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmsy
-10.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/share/t
-exmf/fonts/type1/urw/courier/ucrr8a.pfb></usr/share/texmf/fonts/type1/urw/helve
-tic/uhvb8a.pfb></usr/share/texmf/fonts/type1/urw/helvetic/uhvr8a.pfb></usr/shar
-e/texmf/fonts/type1/urw/helvetic/uhvro8a.pfb></usr/share/texmf/fonts/type1/urw/
-palatino/uplb8a.pfb></usr/share/texmf/fonts/type1/urw/palatino/uplbi8a.pfb></us
-r/share/texmf/fonts/type1/urw/palatino/uplr8a.pfb></usr/share/texmf/fonts/type1
-/urw/palatino/uplri8a.pfb></usr/share/texmf/fonts/type1/urw/times/utmr8a.pfb></
-usr/share/texmf/fonts/type1/urw/zapfding/uzdr.pfb>
-Output written on main.pdf (8 pages, 509407 bytes).
+mmi7.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/share
+/texmf/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texmf/fonts/type1/p
+ublic/amsfonts/cm/cmr7.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmr
+8.pfb></usr/share/texmf/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/t
+exmf/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/share/texmf/fonts/type1/urw
+/courier/ucrr8a.pfb></usr/share/texmf/fonts/type1/urw/helvetic/uhvb8a.pfb></usr
+/share/texmf/fonts/type1/urw/helvetic/uhvr8a.pfb></usr/share/texmf/fonts/type1/
+urw/helvetic/uhvro8a.pfb></usr/share/texmf/fonts/type1/urw/palatino/uplb8a.pfb>
+</usr/share/texmf/fonts/type1/urw/palatino/uplbi8a.pfb></usr/share/texmf/fonts/
+type1/urw/palatino/uplr8a.pfb></usr/share/texmf/fonts/type1/urw/palatino/uplri8
+a.pfb></usr/share/texmf/fonts/type1/urw/zapfding/uzdr.pfb>
+Output written on main.pdf (8 pages, 357967 bytes).
 PDF statistics:
- 372 PDF objects out of 1000 (max. 8388607)
- 320 compressed objects within 4 object streams
- 77 named destinations out of 1000 (max. 500000)
- 276 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 338 PDF objects out of 1000 (max. 8388607)
+ 300 compressed objects within 3 object streams
+ 70 named destinations out of 1000 (max. 500000)
+ 233 words of extra memory for PDF output out of 10000 (max. 10000000)
 

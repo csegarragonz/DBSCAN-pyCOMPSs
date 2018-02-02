@@ -206,7 +206,7 @@ Recently a lot of research has been dedicated to improving clustering algorithms
 
 In comparison to its main competitor the \textbf{k-means} algorithm \cite{kmeans}, DBSCAN is robust to outliers, it does not require an initial guess of the number of clusters and it is able to detect non-convex clusters as exposed in Figure \ref{fig_comp_clust}. To obtain the Figure the dataset has been generated using the \textit{Sklearn} package for datasets (\href{http://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_moons.html}{\texttt{make\_moons}}), the DBSCAN algorithm is the one presented in this document and the k-means is a personal implementation available on the \href{https://github.com/csegarragonz/DBSCAN-pyCOMPSs}{project's GitHub repository}.
 
-\begin{figure*}[!t]
+\begin{figure*}[!h]
 \centering
 \subfloat[Clusters found by DBSCAN.]{\includegraphics[width=3.5in]{img/moonsDBSCAN.png}%
 \label{fig_first_case}}
@@ -251,15 +251,15 @@ The algorithm implemented is a reinterpretation of the one exposed in \cite{Refe
   \begin{algorithmic}[1]
     \Function{DBSCAN}{$data\_file$, $epsilon$, $min\_points$}
         \ForAll{$square$ \textbf{in} $frag\_data$}
-            \State $frag\_data \gets \text{load\_data}(data\_file\_system)$
+            \State $frag\_data \gets \text{load\_data}(data\_file)$
             \State $local\_clusters \gets \text{partial\_scan}(frag\_data)$
-            \State $syn\_clusters \gets \text{sync\_clusters}(local\_clusters)$
+            \State $cluster\_map \gets \text{sync\_clusters}(local\_clusters)$
         \EndFor
         \State $frag\_data \gets \text{compss\_wait\_on}(frag\_data)$
+        \State $ maps \gets \text{map\_clusters} (frag\_data, cluster\_map)$
         \ForAll{$square$ \textbf{in} $frag\_data$}
-            \State $f\_clusters \gets \text{expand\_clusters} (synced\_clusters)$
+            \State $\text{expand\_clusters} (square, maps)$
         \EndFor
-        \State $ \text{update\_labels} (frag\_data, f\_clusters)$
         \State $\textbf{return} \hspace{5pt} 1$
     \EndFunction
   \end{algorithmic}
@@ -282,12 +282,12 @@ The starting problem is a task that has as an input data file that can be arbitr
   \begin{algorithmic}[1]
     \Function{orquestrate\_task}{$data\_file, q=1, r=0$}
         \State $THRESHOLD = TH\_VALUE$
-        \If{$\text{len}(data\_file)/q \geq TH\_VALUE$}
-        \State $out = \text{orquestrate\_task}(data\_file, 2*q, 0)$
-        \State $out = \text{orquestrate\_task}(data\_file, 2*q, 1)$
-        \Else
-        \State $out = \text{task}(data\_file, q, r)$
-        \EndIf
+            \If{$\text{len}(data\_file)/q \geq TH\_VALUE$}
+                \State $out = \text{orquestrate\_task}(data\_file, 2*q, 0)$
+                \State $out = \text{orquestrate\_task}(data\_file, 2*q, 1)$
+            \Else
+                \State $out = \text{task}(data\_file, q, r)$
+            \EndIf
         \State \textbf{return} $out$
     \EndFunction
   \end{algorithmic}
@@ -296,9 +296,9 @@ The starting problem is a task that has as an input data file that can be arbitr
 Back to the data initialisation, for each data file, an orquestration following the structure stated in \ref{recursive_approach} is performed upon the length of each data file with a threshold value of approximately 1 \% of the number of points in the dataset. For each chunk then the data is loaded to a Python object and the cluster id's initially set to noise level.
 
 \subsubsection{Partial Scan} \label{sec:partial-scan}
-The aim of this method is to find core points, i.e points with over $min\_points$ neighbors and make clusters of them. For each cube in our initial grid, known the grid size and $\varepsilon$ it is possible to quickly determin the number of neighbour cubes necessary to correctly identify all the core points within our goal refgion. In Figure \ref{fig:neigh-loc},
+The aim of this method is to find core points, i.e points with over $min\_points$ neighbors and make clusters of them. For each cube in our initial grid, known the grid size and $\varepsilon$ it is possible to quickly determin the number of neighbour cubes necessary to correctly identify all the core points within our goal refgion. In Figure \ref{fig:neigh-loc}, it is easy to see the criterion followed to quickly obtain the neighbos of a square. Limiting the amount of neighbor squares, the number of points where a certain point within our cube might have neighbors. This first neighbor square retrieval might be seen as a lazy function since speed was prefered over accuracy in this case.
 
-\begin{figure}[!t]
+\begin{figure}[!h]
 \centering
 \begin{tikzpicture}[every node/.style={minimum size=1cm-\pgflinewidth, outer sep=0pt}]
     \draw[step=1cm, color=black, dashed] (-2.5,-2.5) grid (3.5,3.5);
@@ -331,133 +331,172 @@ The aim of this method is to find core points, i.e points with over $min\_points
     \draw[<->, thick, red] (1, 0.2) -- (2.5, 0.2) node[midway, above] {\vspace{-5pt} $\varepsilon$};
     \draw[thick, red, dashed] (-1.5, -1.5) rectangle (2.5, 2.5);
 \end{tikzpicture}
-\caption{\label{fig:neigh-loc}}
+\caption{Given the square in processment (blue) and $\varepsilon$, the squares shaded in gray will be considered neighbors. \label{fig:neigh-loc}}
 \end{figure}
 
-With this core points, a first cluster proposal is made (a cluster is a subset of the points assigned to that worker, however each worker has access to its neighbor squares' points to determine whether a point neighborhood contains enough people). In the example of Figure \ref{fig_clustering}, \texttt{num\_parts} has been fixed to 1 so that each square is assigned to one and only one worker, otherwise intermediate results would be difficult to visually understand.
-\begin{algorithm}
-  \caption{Looks for all the core points in a certain square\label{alg:partialScan}}
-  \begin{algorithmic}[1]
-  	\State @task()
-            	\Function{partial\_scan}{$square, epsilon, min\_points$}  
-            \State \begin{varwidth}[t]{\linewidth}
-                	\hskip\algorithmicindent $frag\_data$) 
-            \end{varwidth} 
-		\State $point\_set\_real \gets \text{get\_data}(square)$ 
-        \State $point\_set \gets \text{get\_data(get\_neighbors}(square))$
-        \ForAll{$point$ \textbf{in} $point\_set\_real$}
-        	\ForAll{$pos\_neigh$ \textbf{in} $point\_set$}
-            	\If{distance($point, pos\_neigh$) $\leq$ $epsilon$}
-                	\State $point$.neighbors += 1
-                \EndIf
-      		\EndFor
-        	\If{$point$.neighbors $\geq$ $min\_points$}
-            	\State $core\_points\text{.add}(point)$
-          	\EndIf
-     	\EndFor
-        \State \textbf{returns} $core\_points$
-    \EndFunction
-  \end{algorithmic}
-\end{algorithm}
-\begin{figure*}[!t]
+Once it becomes clear where possible neighbor points might be looked for, for each cube in the grid, the point-limiting approach is followed. As seen in Algorithm \ref{alg:rec-approach}, the user must choose a \texttt{data-file} to divide. Inutively, and due to size constrains, one might assume that the files to be divided are the set of neighbors. In practice however, this approach proves to be mistaken. The objective of this method is to find all the core points within a square, i.e over \texttt{min\_points} neighbors. Dividing the neighbors would make impossible to decide wether a point is core or not at execution time. Given that the square itself is also considered a neighbor of itself, it is clear that there is no problem whatsoever in dividing the square to process instead of the neighbors. This explanation is exposed in Figure \ref{fig:p-scan-division}. Each worker looks for core points within their colored square and look for possible neighbors within all the gray and colored area.
+
+\begin{figure}[!h]
 \centering
-\subfloat[Dataset with adaptative partitioning.]{\includegraphics[width=3.5in]{img/anim-1.png}%
-\label{fig_f_case}}
-%\hfil
-\subfloat[Initial cluster proposal.]{\includegraphics[width=3.5in]{img/anim-2.png}%
-\label{fig_s_case}}
-\hfill 
-\subfloat[Clusters after synchronization.]{\includegraphics[width=3.5in]{img/anim-3.png}%
-\label{fig_t_case}}
-\hfil
-\subfloat[Final output.]{\includegraphics[width=3.5in]{img/anim-4.png}%
-\label{fig_se_case}}
-\caption{Plotting of the current result at each step of the algorithm.}
-\label{fig_clustering}
-\end{figure*}
+\begin{tikzpicture}[every node/.style={minimum size=1cm-\pgflinewidth, outer sep=0pt}]
+    % Graphic area
+    \draw[step=1cm, color=black, dashed] (-1.25,-1.25) grid (2.25,2.25);
+    \node[fill=blue!20, minimum size=0.5cm-\pgflinewidth] at (0.25, 0.25) {};
+    \node[fill=red!20, minimum size=0.5cm-\pgflinewidth] at (0.75, 0.75) {};
+    \node[fill=green!20, minimum size=0.5cm-\pgflinewidth] at (0.25, 0.75) {};
+    \node[fill=yellow!20, minimum size=0.5cm-\pgflinewidth] at (0.75, 0.25) {};
+    \node[fill=gray!20] at (0.5, 1.5) {};
+    \node[fill=gray!20] at (0.5, -0.5) {};
+    \node[fill=gray!20] at (1.5, 1.5) {};
+    \node[fill=gray!20] at (1.5, -0.5) {};
+    \node[fill=gray!20] at (1.5, 0.5) {};
+    \node[fill=gray!20] at (-0.5, 1.5) {};
+    \node[fill=gray!20] at (-0.5, -0.5) {};
+    \node[fill=gray!20] at (-0.5, 0.5) {};
 
-\subsubsection{Cluster Synchronization} \label{cluster_sync}
-As a result of \ref{neigh_retr}, a huge list of clusters is obtained. To sync the corresponding results the clusters are reinterpreted as nodes in a graph and an adjacency matrix is built. The $(i,j)$-th element in the matrix will be true if and only if the distance between the $i$-th and the $j$-th cluster is lower than $\varepsilon$, see Definition \ref{def_distance}. Equivalently, each synced cluster will correspond to a connected component of the graph determined by the adjacency matrix (here a synced cluster refers to a cluster post-synchronization). Using a merge-find set, this dependencies are quickly sorted and the connected components easily found.
-Since the initial number of clusters found depends on the amount of partition points chosen and on the data distribution, an extra scale parameter is introduced to prevent the algorithm of scheduling too many tasks (one per comparison). This scale parameter, $numComp$ determines how many cluster vs cluster comparisons a single task performs.
+    % Legend
+    \node[fill=blue!20, minimum size=0.25cm-\pgflinewidth] at (3, 1.25) {};
+    \node[anchor=west] at (3.05, 1.21) {\footnotesize Chunk assigned to Worker 1};
+    \node[fill=green!20, minimum size=0.25cm-\pgflinewidth] at (3, 0.75) {};
+    \node[anchor=west] at (3.05, 0.71) {\footnotesize Chunk assigned to Worker 2};
+    \node[fill=red!20, minimum size=0.25cm-\pgflinewidth] at (3, 0.25) {};
+    \node[anchor=west] at (3.05, 0.21) {\footnotesize Chunk assigned to Worker 3};
+    \node[fill=yellow!20, minimum size=0.25cm-\pgflinewidth] at (3, -0.25) {};
+    \node[anchor=west] at (3.05, -0.29) {\footnotesize Chunk assigned to Worker 4};
+
+\end{tikzpicture}
+\caption{Data partition for each task performing a \texttt{partial\_scan}. \label{fig:p-scan-division}}
+\end{figure}
+
+Each worker then looks for core points within his area. Once it is done with that, it tries and cluster them. I.e, it performs core-points clusters which do not exactly fit in the cluster definition given before. The output of each task is a chunk of the square dataset labeled. The labeling process is relevant and worth explaining in detail.
+
+For each point processed, if the point is a core point then its label is updated to $-1$, if it is not a core point but has an already found core point in its neighborhood, a numerical pointer to the before mentioned core point is introduced so, in the final processing stages, labeling these reachable points will have no computing cost at all. Lastly, if it has at least more than one neighbor, the algorithm keeps track of them so that, if any gets later labeled with a cluster, it will be instant to label the first. 
+
+Once this initial core point search and labeling is finished, the worker clusters only the core points, labeling each one from zero onwards. For each square, a reduce task is implemented to combine the work performed by each worker. Since later a syncronisation task will take care of clusters that should be merged, all the clusters found by the different clusters are considered to be different and labels are updated accordingly. Note that they might need to be merged but moving this computation from the reduce task to the synchronisation one improves scalability. Algorithm \ref{alg:partial-scan} drafts this process.
 
 \begin{algorithm}
-  \caption{Returns an adjacency matrix \label{alg:syncClusters}}
+  \caption{Looks for all the core points in a certain square and performs an initial clustering. \label{alg:partial-scan}}
   \begin{algorithmic}[1]
-    \Function{sync\_clusters}{$clusters$}
-		\ForAll{$clust1$ \textbf{in} $clusters$}
-        	\ForAll{$clust2$ \textbf{in} $clusters$}
-            	\State @task()
-            	\If{distance($clust1, clust2$) $\leq$ $epsilon$}
-            		\State $adjMatrix$[$clust1$.num, $clust2$.num] $\gets$ 1
+    \State @task()
+    \Function{partial\_scan}{$sub\_square, neigh\_data$}  
+        \State \Comment{Core point retrieval}
+        \ForAll{$point$ \textbf{ in } $sub\_square$}
+            \If{neighs($point, neigh\_data$) $\geq$ $min\_points$}
+                \State $point \text{ is } core\_point $
+                \Else
+                \If{$core\_p \textbf{ in } \text{neighs}(point, neigh\_data)$}
+                    \State $\text{link}(point, core\_point)$
+                \Else
+                    \State $\text{map}(point, neighs(point, neigh\_data)$
                 \EndIf
-           	\EndFor
-     	\EndFor
-        \State \textbf{return} $adjMatrix$
-    \EndFunction
-  \end{algorithmic}
-\end{algorithm}
-
-
-\subsubsection{Cluster Expansion} \label{cluster_exp} 
-Once all the information is updated, the current result is a set of clusters of core-points. A second neighbor retrieval is performed, assigning a part of each cluster to a worker, to check for reachable points and add them non-deterministically. Finally results are exported to a text file and, if selected, clusters are plotted and the plot saved to file.
-
-\begin{algorithm}
-  \caption{Expands all clusters from the list \label{alg:expandClusters}}
-  \begin{algorithmic}[1]
- 	\Function{expand\_clusters}{$clusters$}
-		\ForAll{$clust$ \textbf{in} $clusters$}
-			\State $tmp\_points$ $\gets$ get\_neighbors($clust$.square)
-            \State $poss\_neigh$ $\gets$ $tmp\_points$ \textbf{not in} $clust$.points
-       		\ForAll{$point$ \textbf{in} poss\_neigh}
-            	\If{distance($point, clust \leq epsilon$)}
-                	\State $clust$.add($point$)
-               	\EndIf
-          	\EndFor
+            \EndIf
         \EndFor
+        \State \Comment{Core point clustering}
+        \State $clust\_count = 0$
+        \ForAll{$point \textbf{ in } core\_points$}
+            \If{$\text{close}(point,cluster)$}
+                \State $point\_label = cluster\_id$
+            \Else 
+                \State $point\_label = clust\_count$
+                \State $clust\_count += 1$
+            \EndIf
+        \EndFor
+        \State \textbf{return} $sub\_square$
     \EndFunction
   \end{algorithmic}
 \end{algorithm}
 
+\subsubsection{Cluster Synchronization} \label{subsec:cluster_sync}
+The partial scanning results in each square having an arbitrary number of clusters of core points contained in them. Note that not the whole cluster must necessary be contained within the square itself but all the points contained in it are, for sure, core points. The following task again, for each square, computes to which clusters contained in their neighbors each cluster from iself can be merged with. Note as well that the neighbors are those from Figure \ref{fig:neigh-loc}. As a consequence it outputs a sort of adjacency matrix where, for each cluster contained in the square, there is a list with all the squares it can be merged with.
 
-The whole process is summarized in Figure \ref{fig_clustering}.
+It is important to notice that for a cluster to be considered possible to merge with, and since all the points considered are core points, only a point from each one must be at distance under $\varepsilon$. Therefore it is possible to now apply the recursive approach not over the square data but rather over the neighbors data as presented in Figure \ref{fig:clust-sync-dp}.
 
-\subsection{Dependency Graph}
-The COMPSs framework introduced in Section \ref{compss_framework} incorporates a dependencies graph generating script to improve the comprehension on the application behavior. 
-
-In Figure \ref{dep_graf} two main bottlenecks in the execution can be observed (besides the last synchronization which is unavoidable). Relating to the step by step description, the first one corresponds to the initial neighbor retrieval and the first cluster proposal. One might think that this step does not need a synchronization point since the cluster vs cluster comparison does not require all the clusters to be found just the two required to be compared. Even though this might sound true in theory, the fact that the points from a square need to be sub-partitioned again for size issues and the fact that in order to build the adjacency matrix one must know the number of nodes his graph will have make removing this synchronization point nearly impossible (at least with this implementation). However there are as well possible workarounds. For instance, a \texttt{MAX\_CLUSTS} variable could be defined and all the sizes prefixed. This goes however against one of the DBSCAN's main principle, that no information about the number of clusters is required to begin the execution. Further development on improvement proposals is exposed in Section \ref{further_development}. The second bottleneck comes after the initial cluster proposal is synced. Once we know for each cluster which clusters it can be merged too, it is mandatory to wait for all the information processed since otherwise a lot of time could be lost in moving points from a cluster to another. For instance, if cluster 1 must be merged with cluster 2 and cluster 2 with clusters 1 and 3, not waiting for all the adjacency matrix to be computed would represent copying all the data twice with the corresponding loss in performance.
-
-\begin{figure}[!t]
-\centering
-\includegraphics[width=3.5in]{img/complete_graph.pdf}
-\caption{Dependency graph for a small execution.}
-\label{dep_graf}
-\end{figure}
-
-
-\subsection{About equivalence}
-
-Basing on the definitions given in Section \ref{the_algorithm} and the implementation exposed in Section \ref{step_by_step}. It is pretty clear that the algorithm performs completely equivalently to the one stated in \cite{ReferencePaper}. The neighbor retrieval is the same as in the reference implementation. When syncing two different situations may appear.
-\begin{itemize}
-\item \textbf{Clusters in different squares.} This is one of the most common situations. A natural cluster divided by the space partition performed at \ref{partition_space}. If both clusters should really be merged, then at least one point from each cluster must be at a distance lower than $\varepsilon$ and, if so, the syncing process will merge them. This situation is illustrated in Figure \ref{test_case1}. Bear in mind though that after \ref{neigh_retr} only clusters of core points are found.  What if the linking point between two clusters is not a core point?
 \begin{figure}[!h]
 \centering
-\includegraphics[width=2.5in]{img/test_case1.png}
-\caption{A cluster divided by the chunking process.}
-\label{test_case1}
+\begin{tikzpicture}[every node/.style={minimum size=1cm-\pgflinewidth, outer sep=0pt}]
+    % Graphic area
+    \draw[step=1cm, color=black, dashed] (-1.25,-1.25) grid (2.25,2.25);
+    \node[fill=gray!20] at (0.5, 0.5) {};
+    \node[fill=green!20] at (0.5, 1.5) {};
+    \node[fill=cyan!20] at (0.5, -0.5) {};
+    \node[fill=red!20] at (1.5, 1.5) {};
+    \node[fill=purple!20] at (1.5, -0.5) {};
+    \node[fill=yellow!20] at (1.5, 0.5) {};
+    \node[fill=blue!20] at (-0.5, 1.5) {};
+    \node[fill=orange!20] at (-0.5, -0.5) {};
+    \node[fill=brown!20] at (-0.5, 0.5) {};
+
+    % Legend
+    \node[fill=orange!20, minimum size=0.25cm-\pgflinewidth] at (3, 2.25) {};
+    \node[anchor=west] at (3.05, 2.21) {\footnotesize Chunk assigned to Worker 1};
+    \node[fill=brown!20, minimum size=0.25cm-\pgflinewidth] at (3, 1.75) {};
+    \node[anchor=west] at (3.05, 1.71) {\footnotesize Chunk assigned to Worker 2};
+    \node[fill=blue!20, minimum size=0.25cm-\pgflinewidth] at (3, 1.25) {};
+    \node[anchor=west] at (3.05, 1.21) {\footnotesize Chunk assigned to Worker 3};
+    \node[fill=green!20, minimum size=0.25cm-\pgflinewidth] at (3, 0.75) {};
+    \node[anchor=west] at (3.05, 0.71) {\footnotesize Chunk assigned to Worker 4};
+    \node[fill=red!20, minimum size=0.25cm-\pgflinewidth] at (3, 0.25) {};
+    \node[anchor=west] at (3.05, 0.21) {\footnotesize Chunk assigned to Worker 5};
+    \node[fill=yellow!20, minimum size=0.25cm-\pgflinewidth] at (3, -0.25) {};
+    \node[anchor=west] at (3.05, -0.29) {\footnotesize Chunk assigned to Worker 6};
+    \node[fill=purple!20, minimum size=0.25cm-\pgflinewidth] at (3, -0.75) {};
+    \node[anchor=west] at (3.05, -0.79) {\footnotesize Chunk assigned to Worker 7};
+    \node[fill=cyan!20, minimum size=0.25cm-\pgflinewidth] at (3, -1.25) {};
+    \node[anchor=west] at (3.05, -1.29) {\footnotesize Chunk assigned to Worker 8};
+
+\end{tikzpicture}
+\caption{Data partition for each task performing a \texttt{sync\_clusters}. \label{fig:clust-sync-dp}}
 \end{figure}
-\item \textbf{Clusters that share a non-core point.} According to the reference paper, if two point-dense regions lie within a $\varepsilon$-neighborhood of the same point, even if this point might only have two neighbors, then this must be non-deterministically assigned to one of the two clusters. This does not represent a problem to the initial algorithm since its sequentiality prevents it from needing to take a decision. In \ref{cluster_exp} at the Cluster Expansion Stage the same point will be assigned to both clusters but only assigned to the first of them in the cluster list. This situation is illustrated in Figure \ref{test_case2}.
-\begin{figure}[!h]
-\centering
-\includegraphics[width=2.5in]{img/test_case2.png}
-\caption{Cluster linked by a non-core point.}
-\label{test_case2}
-\end{figure}
-\end{itemize}
+
+To gather and synchronise all the results from the different workers it is as simple as sequentally cover all the diferent adjacency matrix found and add a cluster to the merging list if it is not there. The whole algorithm is drafted in Algorithm \ref{alg:sync-clusters}.
+
+\begin{algorithm}
+  \caption{Builds an adjacency matrix from a square w.r.t its neighbors.\label{alg:sync-clusters}}
+  \begin{algorithmic}[1]
+    \State @task()
+    \Function{sync\_clusters}{$square, sub\_neigh\_data$}
+        \State $core\_points \gets \text{get\_core\_points}(square)$
+        \ForAll{$point \textbf{in} core\_points$}
+            \State $neigh\_cores \gets \text{get\_core\_points}(sub\_neigh)$
+            \If{\text{close}($point, n\_point \textbf{ in } neigh\_cores$)}
+                \State $adj\_matrix[point\_id].add(n\_point\_id)$
+            \EndIf
+        \EndFor
+        \State \textbf{return} $adj\_matrix$
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm}
+
+\subsection{Cluster Mapping} \label{subsec:cluster-mapping}
+This is the only non-task method, i.e it must run sequentially, and it can be thought as a reduce method for each of the adjacency matrix provided by each square in the grid. This problem can be easily solved chosing the right data structure. A disjoint or union-find set immediately yields the result since it is the easier way to, given connections between nodes in a graph, find the connected components.
+
+\subsubsection{Cluster Expansion} \label{cluster_exp}
+The goal of this last task is to assign a label to all the reachable points. According to Algorithm \ref{alg:partial-scan} the non-core points can either be directly pointing to another core point in which case labeling them is as simple as copying the label of the point they are looking at  or can keep track of all the points they were close to. This second case needs to be considered because, since the algorithm works sequentially point by point, it could happen that a point has a core point as a neighbor but by the time it is being porcessed the core point has not yet been processed and as a consequence he does not acknowledge it. In this case, hovering over all the points it was mapped to, and linking to the first one labeled with a cluster is sufficient. Remapping all the labels with the links found in the preceeding method is the last thing to do before printing the results to the out file. This process is drafted in Algorithm \ref{alg:expand-cluster}.
+
+\begin{algorithm}
+  \caption{Label all the reachanle points within a cluster. \label{alg:expand-clusters}}
+  \begin{algorithmic}[1]
+    \State @task()
+    \Function{expand\_clusters}{$square\_data, mappings$}
+        \State \Comment{Reachable points labeling}
+        \State $non\_core\_points \gets \text{get\_non\_core}(square\_data)$
+        \ForAll{$point \textbf{in} non\_core$}
+            \If{$point\_id \text{ points to } core\_point$}
+                \State $point\_id \gets core\_point\_id$
+            \ElsIf{$point\_id \text{ maps to } core\_point$}
+                \State $point\_id \gets core\_point\_id$
+            \EndIf
+        \EndFor
+        \State \Comment{Remap the cluster labels according to the sync}
+        \State $square\_data\_id \gets \text{remap}(square\_data\_id, mappings)$
+        \State \text{save\_to\_file}$(square\_data)$
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%     EVALUATION       %%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 
 \section{Evaluation} \label{sec:performance}
 

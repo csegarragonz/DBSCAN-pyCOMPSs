@@ -400,7 +400,6 @@ def DBSCAN(epsilon, min_points, file_id, TH_0, TH_1):
             neigh_squares_loc.append(coord)
             neigh_squares.append(dataset[coord])
             len_neighs += len_datasets[coord]
-        # TODO: make as INOUT instead of OUT, currently not working
         fut_list = orquestrate_sync_clusters(dataset[comb], adj_mat[comb],
                                              epsilon, comb, neigh_squares_loc,
                                              len_neighs, 1, 0, [],
@@ -408,7 +407,6 @@ def DBSCAN(epsilon, min_points, file_id, TH_0, TH_1):
         adj_mat[comb] = merge_task(adj_mat[comb], *fut_list)
 
     # Cluster list update
-    # TODO: join the three
     border_points = dict_compss_wait_on(border_points, dimension_perms)
     tmp_mat = dict_compss_wait_on(tmp_mat, dimension_perms)
     adj_mat = dict_compss_wait_on(adj_mat, dimension_perms)
