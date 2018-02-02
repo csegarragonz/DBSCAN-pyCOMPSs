@@ -1,6 +1,7 @@
 import os
 import csv
 import time
+from shutil import copytree
 from collections import namedtuple, defaultdict
 
 Result = namedtuple("Result", ["nodes", "TH"])
@@ -24,6 +25,9 @@ for filename in os.listdir("./outputs/"):
                 if "Time elapsed:" in line:
                     time = line.split()[2]
             else:
+                name = filename.split("-")[1].split(".")[0]
+                copytree("./../../../.COMPSs/" + name, "./outputs/n_nodes_" + 
+                         str(num_nodes) + "_th_" + str(TH_2))
                 result_table[Result(nodes = num_nodes, TH = TH_2)] = time
 
 
