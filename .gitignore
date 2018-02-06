@@ -15,6 +15,7 @@ plot/
 
 #Ignore useful papers
 papers/
+Pap_DBSCAN/
 
 #Ignore test files
 test.py
