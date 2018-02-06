@@ -244,13 +244,13 @@ The \href{https://www.bsc.es/research-and-development/software-and-apps/software
 % JC: Describe all implementation details of the proposal. How has DBSCAN been parallelised, parameters, etc.
 % JC: Details about how it has been evaluated should be in the evaluation section.
 
-The algorithm implemented is a reinterpretation of the one exposed in \cite{ReferencePaper}, it is still though completely equivalent. The implementation can be found in \href{https://github.com/csegarragonz/DBSCAN-pyCOMPSs}{this GitHub repository}. The main algorithm would be structured as in Algorithm \ref{alg:main} (note that all the methods stated are later expanded and explained). It takes as an input the two required parameters: $\varepsilon$ and \texttt{min\_points} as well as the path to a distirbuted dataset stored in some sort of database\footnote{For the speciphic implementation given, the structure assumed is that of the GPFS in \ref{subsec:infrastructure} and points are assumed to be divided in a grid. Otherwise a linear classificlation should be incoporated in the pre-processing.}. It outputs the same dataset labeled with the cluster id they belong to.
+The algorithm implemented is a reinterpretation of the one exposed in \cite{ReferencePaper}, it is still though completely equivalent. The implementation can be found in \href{https://github.com/csegarragonz/DBSCAN-pyCOMPSs}{this GitHub repository}. The main algorithm follows the structure from  Algorithm \ref{alg:main} (note that all the methods stated are later expanded and explained). It takes as an input the two required parameters: $\varepsilon$ and \texttt{min\_points} as well as the path to a distirbuted dataset stored in some sort of database\footnote{For the speciphic implementation given, the structure assumed is that of the GPFS in \ref{subsec:infrastructure} and points are assumed to be divided in a grid. Otherwise a linear classificlation should be incoporated in the pre-processing.}. It outputs the same dataset labeled with the cluster id each point belongs to.
 
 \begin{algorithm}
   \caption{Main method for the DBSCAN algorithm. \label{alg:main}}
   \begin{algorithmic}[1]
     \Function{DBSCAN}{$data\_file$, $epsilon$, $min\_points$}
-        \ForAll{$square$ \textbf{in} $frag\_data$}
+        \ForAll{$square$ \textbf{in} $data\_file$}
             \State $frag\_data \gets \text{load\_data}(data\_file)$
             \State $local\_clusters \gets \text{partial\_scan}(frag\_data)$
             \State $cluster\_map \gets \text{sync\_clusters}(local\_clusters)$
@@ -272,7 +272,7 @@ Note that all the methods executed within the loop statements include the \textt
 \subsubsection{Data Loading} \label{data_pre_process}
 It is important to bear in mind the punctualisation from the section above: data is assumed to be normalised (each feature of each point belonging to the interval $[0,1]$) and distributed in a file system grid-shaped. This is, if for instance the points are two-dimensional, a possible distribution would consist in the following files: \texttt{data\_0\_0.txt}, \texttt{data\_0\_1.txt}, \dots, \texttt{data\_0\_9.txt}, \texttt{data\_1\_0.txt}, \dots, \texttt{data\_9\_9.txt}. Where a point belongs to a file if each feature's first decimal position matches the file name. Were the files to be too big, two decimal places could be used as an identifier. Note that having multiples of a 100 files eases an hypothetical pre-processement if all the data was given in a single, gigantic, file.
 
-The aim of this method is to read the data belongig to a cube in our space grid, a file in the file system, and load it to memory. When doing so, each point is given a cluster id. It will be really common throughout the whole implementation to follow a recursive approach within a single task to tackle possible load imbalacments. It is such a usual practice that it is worth introducing a generic explanation.
+The aim of this method is to read the data belongig to a square in our space grid, a file in the file system, and load it to memory. When doing so, each point is given a cluster id. It will be really common throughout the whole implementation to follow a recursive approach within a single task to tackle possible load imbalacments. It is such a usual practice that it is worth introducing a generic explanation.
 
 \subsubsection*{A recursive approach to tackle load balancing} \label{recursive_approach}
 The starting problem is a task that has as an input data file that can be arbitrarily big. This will cause an imbalancement in the tasks length and a decrease in the overall performance and speedup of the algorithm. It is easy to know the length of the data file and, with a simple recursive orquestrator, run tasks over chunks of the data file with a limited number of points (\texttt{THRESHOLD}). The generic structure would be that of Algorithm \ref{alg:rec-approach}. Note that \texttt{orquestrate\_task} is not a \texttt{@task} and is therefore executed by the master thread whilst \texttt{task} is indeed and will be executed by a worker.
@@ -293,10 +293,10 @@ The starting problem is a task that has as an input data file that can be arbitr
   \end{algorithmic}
 \end{algorithm}
 
-Back to the data initialisation, for each data file, an orquestration following the structure stated in \ref{recursive_approach} is performed upon the length of each data file with a threshold value of approximately 1 \% of the number of points in the dataset. For each chunk then the data is loaded to a Python object and the cluster id's initially set to noise level.
+Back to the data initialisation, for each data file, an orquestration following the structure just presented is performed upon the length of each data file with a threshold value. For each chunk then the data is loaded to a Python object and the cluster id's initially set to noise level.
 
 \subsubsection{Partial Scan} \label{sec:partial-scan}
-The aim of this method is to find core points, i.e points with over $min\_points$ neighbors and make clusters of them. For each cube in our initial grid, known the grid size and $\varepsilon$ it is possible to quickly determin the number of neighbour cubes necessary to correctly identify all the core points within our goal refgion. In Figure \ref{fig:neigh-loc}, it is easy to see the criterion followed to quickly obtain the neighbos of a square. Limiting the amount of neighbor squares, the number of points where a certain point within our cube might have neighbors. This first neighbor square retrieval might be seen as a lazy function since speed was prefered over accuracy in this case.
+The aim of this method is to find core points, i.e points with over $min\_points$ neighbors and make clusters of them. For each square in our initial grid, known the grid size and $\varepsilon$, it is possible to quickly determin the number of neighbour squares necessary to correctly identify all the core points within our goal refgion. In Figure \ref{fig:neigh-loc}, it is easy to see the criterion followed. Limiting the amount of squares necessary to visit clearly reduces the computation necessary to perform the task. It is not the mos accurate space partition that can be though of but it is more simple than others and does not require any extra data structure.
 
 \begin{figure}[!h]
 \centering
@@ -334,7 +334,7 @@ The aim of this method is to find core points, i.e points with over $min\_points
 \caption{Given the square in processment (blue) and $\varepsilon$, the squares shaded in gray will be considered neighbors. \label{fig:neigh-loc}}
 \end{figure}
 
-Once it becomes clear where possible neighbor points might be looked for, for each cube in the grid, the point-limiting approach is followed. As seen in Algorithm \ref{alg:rec-approach}, the user must choose a \texttt{data-file} to divide. Inutively, and due to size constrains, one might assume that the files to be divided are the set of neighbors. In practice however, this approach proves to be mistaken. The objective of this method is to find all the core points within a square, i.e over \texttt{min\_points} neighbors. Dividing the neighbors would make impossible to decide wether a point is core or not at execution time. Given that the square itself is also considered a neighbor of itself, it is clear that there is no problem whatsoever in dividing the square to process instead of the neighbors. This explanation is exposed in Figure \ref{fig:p-scan-division}. Each worker looks for core points within their colored square and look for possible neighbors within all the gray and colored area.
+Once it becomes clear where possible neighbor points might be looked for, for each square in the grid, the point-limiting approach is followed. As seen in Algorithm \ref{alg:rec-approach}, the user must choose a \texttt{data-file} to divide. Inutively, and due to size constrains, one might assume that the files to be divided are the set of neighbors. In practice however, this approach proves to be mistaken. The objective of this method is to find all the core points within a square, i.e over \texttt{min\_points} neighbors. Dividing the neighbors would make impossible to decide wether a point is core or not at execution time. Given that the square being processed is also considered a neighbor itself, it is clear that there is no problem whatsoever in dividing the square to process instead of the neighbors. This explanation is exposed in Figure \ref{fig:p-scan-division}. Each worker looks for core points within their colored square and look for possible neighbors within all the gray and colored area.
 
 \begin{figure}[!h]
 \centering
@@ -368,11 +368,11 @@ Once it becomes clear where possible neighbor points might be looked for, for ea
 \caption{Data partition for each task performing a \texttt{partial\_scan}. \label{fig:p-scan-division}}
 \end{figure}
 
-Each worker then looks for core points within his area. Once it is done with that, it tries and cluster them. I.e, it performs core-points clusters which do not exactly fit in the cluster definition given before. The output of each task is a chunk of the square dataset labeled. The labeling process is relevant and worth explaining in detail.
+Once a task has finished scanning the area assignet to it, cluster are made out of the core points found. The output of each task is a chunk of the square dataset labeled. The labeling process is relevant and worth explaining in detail.
 
 For each point processed, if the point is a core point then its label is updated to $-1$, if it is not a core point but has an already found core point in its neighborhood, a numerical pointer to the before mentioned core point is introduced so, in the final processing stages, labeling these reachable points will have no computing cost at all. Lastly, if it has at least more than one neighbor, the algorithm keeps track of them so that, if any gets later labeled with a cluster, it will be instant to label the first. 
 
-Once this initial core point search and labeling is finished, the worker clusters only the core points, labeling each one from zero onwards. For each square, a reduce task is implemented to combine the work performed by each worker. Since later a syncronisation task will take care of clusters that should be merged, all the clusters found by the different clusters are considered to be different and labels are updated accordingly. Note that they might need to be merged but moving this computation from the reduce task to the synchronisation one improves scalability. Algorithm \ref{alg:partial-scan} drafts this process.
+Once this is finished, a reduce task is ran to combine the work performed by each worker. Since later a syncronisation task will take care of clusters that should be merged, all the clusters found by the different clusters are considered to be different and labels are updated accordingly. Note that they might need to be merged but moving this computation from the reduce task to the synchronisation one improves scalability. Algorithm \ref{alg:partial-scan} drafts this process.
 
 \begin{algorithm}
   \caption{Looks for all the core points in a certain square and performs an initial clustering. \label{alg:partial-scan}}
@@ -407,7 +407,7 @@ Once this initial core point search and labeling is finished, the worker cluster
 \end{algorithm}
 
 \subsubsection{Cluster Synchronization} \label{subsec:cluster_sync}
-The partial scanning results in each square having an arbitrary number of clusters of core points contained in them. Note that not the whole cluster must necessary be contained within the square itself but all the points contained in it are, for sure, core points. The following task again, for each square, computes to which clusters contained in their neighbors each cluster from iself can be merged with. Note as well that the neighbors are those from Figure \ref{fig:neigh-loc}. As a consequence it outputs a sort of adjacency matrix where, for each cluster contained in the square, there is a list with all the squares it can be merged with.
+The partial scan results in each square having an arbitrary number of clusters of core points contained in them. Note that not the whole cluster must necessary be contained within the square itself but all the points contained in the cluster are core points. The following task, for each square, computes to which clusters contained in their neighbors each cluster treated can be merged with. It is worth recalling that the neighbors are those from Figure \ref{fig:neigh-loc}. As a consequence it outputs a sort of adjacency matrix where, for each cluster contained in the square, there is a list with all the contiguous clusters it can be merged with.
 
 It is important to notice that for a cluster to be considered possible to merge with, and since all the points considered are core points, only a point from each one must be at distance under $\varepsilon$. Therefore it is possible to now apply the recursive approach not over the square data but rather over the neighbors data as presented in Figure \ref{fig:clust-sync-dp}.
 
@@ -456,7 +456,7 @@ To gather and synchronise all the results from the different workers it is as si
     \State @task()
     \Function{sync\_clusters}{$square, sub\_neigh\_data$}
         \State $core\_points \gets \text{get\_core\_points}(square)$
-        \ForAll{$point \textbf{in} core\_points$}
+        \ForAll{$point \textbf{ in } core\_points$}
             \State $neigh\_cores \gets \text{get\_core\_points}(sub\_neigh)$
             \If{\text{close}($point, n\_point \textbf{ in } neigh\_cores$)}
                 \State $adj\_matrix[point\_id].add(n\_point\_id)$
@@ -467,11 +467,11 @@ To gather and synchronise all the results from the different workers it is as si
   \end{algorithmic}
 \end{algorithm}
 
-\subsection{Cluster Mapping} \label{subsec:cluster-mapping}
-This is the only non-task method, i.e it must run sequentially, and it can be thought as a reduce method for each of the adjacency matrix provided by each square in the grid. This problem can be easily solved chosing the right data structure. A disjoint or union-find set immediately yields the result since it is the easier way to, given connections between nodes in a graph, find the connected components.
+\subsubsection{Cluster Mapping} \label{subsec:cluster-mapping}
+This is the only non-task method, i.e it must run sequentially, and it can be thought as a reduce method for each of the adjacency matrix provided by each square in the grid. This problem can be easily solved chosing the right data structure. A disjoint or union-find set immediately yields the result since it is the easier way to, given connections between nodes in a graph, find the connected components wich in this case are the real clusters.
 
 \subsubsection{Cluster Expansion} \label{cluster_exp}
-The goal of this last task is to assign a label to all the reachable points. According to Algorithm \ref{alg:partial-scan} the non-core points can either be directly pointing to another core point in which case labeling them is as simple as copying the label of the point they are looking at  or can keep track of all the points they were close to. This second case needs to be considered because, since the algorithm works sequentially point by point, it could happen that a point has a core point as a neighbor but by the time it is being porcessed the core point has not yet been processed and as a consequence he does not acknowledge it. In this case, hovering over all the points it was mapped to, and linking to the first one labeled with a cluster is sufficient. Remapping all the labels with the links found in the preceeding method is the last thing to do before printing the results to the out file. This process is drafted in Algorithm \ref{alg:expand-cluster}.
+The goal of this last task is to assign a label to all the reachable points. According to Algorithm \ref{alg:partial-scan} the non-core points can either be directly pointing to another core point in which case labeling them is as simple as copying the label of the point they are looking at  or can keep track of all the points they were close to. This second case needs to be considered because, since the algorithm works sequentially point by point, it could happen that a point has a core point as a neighbor but by the time it is being porcessed the core point has not yet been processed and as a consequence he does not acknowledge it. In this case, hovering over all the points it was mapped to, and linking to the first one labeled with a cluster is sufficient. Remapping all the labels with the links found in the preceeding method is the last thing to do before printing the results to the out file. This process is drafted in Algorithm \ref{alg:expand-clusters}.
 
 \begin{algorithm}
   \caption{Label all the reachanle points within a cluster. \label{alg:expand-clusters}}
