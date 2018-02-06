@@ -1,5 +1,8 @@
 # DBSCAN 4 PyCOMPSs
-# Version with nesting applied to both time-demanding tasks
+# This version is an attempt to divide merge_task_ps_0 in smaller tasks.
+# The reason why it has been captured in a different script is that previous 
+# version is sufficiently good to consider not ruining it, as done in previous
+# cases.
 # carlos.segarra @ bsc.es
 
 # Imports
@@ -35,13 +38,15 @@ def count_lines(tupla, file_id):
 
 
 def orquestrate_init_data(tupla, file_id, len_data, quocient,
-                          res, fut_list):
-    THRESHOLD = 100
+                          res, fut_list, TH_1):
+    THRESHOLD = TH_1
     if (len_data/quocient) > THRESHOLD:
         fut_list = orquestrate_init_data(tupla, file_id, len_data,
-                                         quocient*2, res*2 + 0, fut_list)
+                                         quocient*2, res*2 + 0, fut_list,
+                                         THRESHOLD)
         fut_list = orquestrate_init_data(tupla, file_id, len_data,
-                                         quocient*2, res*2 + 1, fut_list)
+                                         quocient*2, res*2 + 1, fut_list,
+                                         THRESHOLD)
     else:
         tmp_f = init_data(tupla, file_id, quocient, res)
         fut_list.append(tmp_f)
@@ -100,24 +105,24 @@ def neigh_squares_query(square, epsilon, dimensions):
 
 
 def orquestrate_scan_merge(data, epsilon, min_points, len_neighs, quocient,
-                           res, fut_list, *args):
+                           res, fut_list, TH_1, *args):
     # TODO: currently hardcoded
-    THRESHOLD = 100
+    THRESHOLD = TH_1
     if (len_neighs/quocient) > THRESHOLD:
         fut_list[0], fut_list[1] = orquestrate_scan_merge(data, epsilon,
                                                           min_points,
                                                           len_neighs,
                                                           quocient*2,
                                                           res*2 + 0,
-                                                          fut_list, *args)
+                                                          fut_list, THRESHOLD,
+                                                          *args)
         fut_list[0], fut_list[1] = orquestrate_scan_merge(data, epsilon,
                                                           min_points,
                                                           len_neighs,
                                                           quocient*2,
                                                           res*2 + 1,
-                                                          fut_list, *args)
-#        orquestrate_scan_merge(data, epsilon, min_points, len_neighs,
-#                               quocient*2, res*2 + 1, fut_list, *args)
+                                                          fut_list, THRESHOLD,
+                                                          *args)
     else:
         obj = [[], []]
         obj[0], obj[1] = partial_scan_merge(data, epsilon, min_points,
@@ -135,9 +140,6 @@ def partial_scan_merge(data, epsilon, min_points, quocient, res, *args):
                                  if ((num % quocient) == res)]),
                        np.array([i for num, i in enumerate(data.value[1])
                                  if ((num % quocient) == res)])]
-    if (quocient == 1) and (res == 0):
-        print data.value
-        print data_copy.value
     neigh_points = np.vstack([i.value[0] for i in args])
     neigh_points_clust = np.concatenate([i.value[1] for i in args])
     non_assigned = defaultdict(int)
@@ -160,16 +162,8 @@ def partial_scan_merge(data, epsilon, min_points, quocient, res, *args):
                         tmp.append(pos)
             else:
                 non_assigned[num] = tmp
-#    if data_copy.value.shape == (1,0):
-    return data_copy, non_assigned
 
-
-@task(returns=3)
-def merge_task_ps_0(epsilon, *args):
-    data_copy = Data()
-    data_copy.value = [np.vstack([i.value[0] for i in args]),
-                       np.concatenate([i.value[1] for i in args])]
-    print data_copy.value
+    # Local clustering
     cluster_count = 0
     core_points_tmp = [p for num, p in enumerate(data_copy.value[0])
                                  if data_copy.value[1][num] == -1]
@@ -186,7 +180,20 @@ def merge_task_ps_0(epsilon, *args):
             else:
                 data_copy.value[1][pos] = cluster_count
                 cluster_count += 1
-    return data_copy, [cluster_count], [cluster_count]
+    return data_copy, non_assigned
+
+
+@task(returns=3)
+def merge_task_ps_0(*args):
+    num_clust_max = max([i for i in args[0].value[1]])+1
+    data = args[0]
+    for i in range(len(args)-1):
+        data.value = [np.vstack([data.value[0], args[i+1].value[0]]),
+                      np.concatenate([data.value[1], [j + num_clust_max if
+                                                      j > -1 else j for j in
+                                                      args[i+1].value[1]]])]
+        num_clust_max += max(max([j for j in args[i+1].value[1]])+1, 0)
+    return data, [int(num_clust_max)], [int(num_clust_max)]
 
 
 @task(returns=defaultdict)
@@ -206,18 +213,18 @@ def dict_compss_wait_on(dicc, dimension_perms):
 
 
 def orquestrate_sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc,
-                              len_neighs, quocient, res, fut_list, *args):
+                              len_neighs, quocient, res, fut_list, TH_2, *args):
     # TODO: currently hardcoded
-    THRESHOLD = 100
+    THRESHOLD = TH_2
     if (len_neighs/quocient) > THRESHOLD:
         fut_list = orquestrate_sync_clusters(data, adj_mat, epsilon, coord,
                                              neigh_sq_loc, len_neighs,
                                              quocient*2, res*2 + 0, fut_list,
-                                             *args)
+                                             THRESHOLD, *args)
         fut_list = orquestrate_sync_clusters(data, adj_mat, epsilon, coord,
                                              neigh_sq_loc, len_neighs,
                                              quocient*2, res*2 + 1, fut_list,
-                                             *args)
+                                             THRESHOLD, *args)
     else:
         fut_list.append(sync_clusters(data, adj_mat, epsilon, coord,
                                       neigh_sq_loc, quocient, res, len_neighs,
@@ -330,7 +337,7 @@ def expand_cluster(data, epsilon, border_points, dimension_perms, links_list,
     f_out.close()
 
 
-def DBSCAN(epsilon, min_points, file_id, TH_0, TH_1):
+def DBSCAN(epsilon, min_points, file_id, TH_1, TH_2):
     #   TODO: code from scratch the Disjoint Set
     #   TODO: comment the code apropriately
     #   TODO: separate the code in different modules
@@ -369,7 +376,7 @@ def DBSCAN(epsilon, min_points, file_id, TH_0, TH_1):
         tmp_mat[comb] = [0]
         border_points[comb] = defaultdict(list)
         fut_list = orquestrate_init_data(comb, file_id, len_datasets[comb], 1,
-                                         0, [])
+                                         0, [], TH_1)
         dataset_tmp[comb] = merge_task_init(*fut_list)
         neigh_sq_coord[comb] = neigh_squares_query(comb, epsilon,
                                                    dimensions)
@@ -385,9 +392,10 @@ def DBSCAN(epsilon, min_points, file_id, TH_0, TH_1):
         fut_list_0, fut_list_1 = orquestrate_scan_merge(dataset_tmp[comb],
                                                         epsilon, min_points,
                                                         len_datasets[coord],
-                                                        1, 0, [[], []],
+                                                        1, 0, [[], []], TH_1,
                                                         *neigh_squares)
-        dataset[comb], tmp_mat[comb], adj_mat[comb] = merge_task_ps_0(epsilon, *fut_list_0)
+        # De moment podria no pasarli el cluster count de cada un i buscarlo
+        dataset[comb], tmp_mat[comb], adj_mat[comb] = merge_task_ps_0(*fut_list_0)
         border_points[comb] = merge_task_ps_1(*fut_list_1)
 
     # Cluster Synchronisation
@@ -400,13 +408,15 @@ def DBSCAN(epsilon, min_points, file_id, TH_0, TH_1):
             neigh_squares_loc.append(coord)
             neigh_squares.append(dataset[coord])
             len_neighs += len_datasets[coord]
+        # TODO: make as INOUT instead of OUT, currently not working
         fut_list = orquestrate_sync_clusters(dataset[comb], adj_mat[comb],
                                              epsilon, comb, neigh_squares_loc,
-                                             len_neighs, 1, 0, [],
+                                             len_neighs, 1, 0, [], TH_2,
                                              *neigh_squares)
         adj_mat[comb] = merge_task(adj_mat[comb], *fut_list)
 
     # Cluster list update
+    # TODO: join the three
     border_points = dict_compss_wait_on(border_points, dimension_perms)
     tmp_mat = dict_compss_wait_on(tmp_mat, dimension_perms)
     adj_mat = dict_compss_wait_on(adj_mat, dimension_perms)
@@ -425,5 +435,5 @@ def DBSCAN(epsilon, min_points, file_id, TH_0, TH_1):
 
 
 if __name__ == "__main__":
-    DBSCAN(float(sys.argv[1]), int(sys.argv[2]), sys.argv[3], sys.argv[4],
-            sys.argv[5])
+    DBSCAN(float(sys.argv[1]), int(sys.argv[2]), sys.argv[3], int(sys.argv[4]),
+            int(sys.argv[5]))
