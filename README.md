@@ -1,4 +1,4 @@
-# DBSCAN-PyCOMPSs
+# DBSCAN 4 PyCOMPSs
 ## 1. Introduction
 DBSCAN for PyCOMPSs is a distributed approach to the well known clustering algorithm proposed for the first time in 1996 [here](https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf "Original Implementation"). The application is implemented in Python and its parallelisation is  performed by the [COMPSs framework](https://www.bsc.es/research-and-development/software-and-apps/software-list/comp-superscalar/ "COMPSs Homepage"). 
 ## 2. Files
