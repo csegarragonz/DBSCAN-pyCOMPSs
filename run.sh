@@ -28,10 +28,8 @@ EXEC_FILE=${scriptDir}/rcDBSCAN.py
 
 runcompss \
     --lang=python \
-    --debug=true \
-    --tracing \
     --project=/home/csegarra/DBTRASH/mem/memory_usage_test.xml \
-    ./DBSCAN.py 0.1 10 1 100 100
+    ./DBSCAN.py 0.1 10 1 50 100
 #python DBSCAN_4_PyC.py 0.1 10 1
 #runcompss --lang=python ./Gen_Data_DBSCAN.py 3 [100,100]
 #python Gen_Data_DBSCAN.py 1 [10,10]

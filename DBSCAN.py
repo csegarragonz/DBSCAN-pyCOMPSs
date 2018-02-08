@@ -66,10 +66,8 @@ def init_data(tupla, file_id, quocient, res):
     tmp_string += ".txt"
     from pandas import read_csv
     df = read_csv(tmp_string, sep=' ', skiprows=lambda x: (x % quocient)
-                  != res)
+                  != res, header = None)
     data_pos.value = df.values.astype(float)
-    if np.shape(data_pos.value)[0] == 0:
-        data_pos.value = np.array([df.columns.values.astype(float)])
     tmp_vec = -2*np.ones(np.shape(data_pos.value)[0])
     data_pos.value = [data_pos.value, tmp_vec]
     return data_pos
@@ -395,7 +393,10 @@ def DBSCAN(epsilon, min_points, file_id, TH_1, TH_2):
                                                         1, 0, [[], []], TH_1,
                                                         *neigh_squares)
         # De moment podria no pasarli el cluster count de cada un i buscarlo
-        dataset[comb], tmp_mat[comb], adj_mat[comb] = merge_task_ps_0(*fut_list_0)
+        dataset[comb],tmp_mat[comb],adj_mat[comb] = merge_task_ps_0(*fut_list_0)
+        tmp_mat[comb] = compss_wait_on(tmp_mat[comb])
+        with open("g2.txt", "a") as f:
+            f.write(str(tmp_mat[comb])+'\n')
         border_points[comb] = merge_task_ps_1(*fut_list_1)
 
     # Cluster Synchronisation
