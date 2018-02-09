@@ -395,7 +395,7 @@ def DBSCAN(epsilon, min_points, file_id, TH_1, TH_2):
         # De moment podria no pasarli el cluster count de cada un i buscarlo
         dataset[comb],tmp_mat[comb],adj_mat[comb] = merge_task_ps_0(*fut_list_0)
         tmp_mat[comb] = compss_wait_on(tmp_mat[comb])
-        with open("g2.txt", "a") as f:
+        with open("g1.txt", "a") as f:
             f.write(str(tmp_mat[comb])+'\n')
         border_points[comb] = merge_task_ps_1(*fut_list_1)
 
