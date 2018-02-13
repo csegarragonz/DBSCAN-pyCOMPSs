@@ -183,7 +183,7 @@ def partial_scan_merge(data, epsilon, min_points, quocient, res, *args):
 
 @task(returns=3)
 def merge_task_ps_0(*args):
-    num_clust_max = max([i for i in args[0].value[1]])+1
+    num_clust_max = max(max([i for i in args[0].value[1]])+1,0)
     data = args[0]
     for i in range(len(args)-1):
         data.value = [np.vstack([data.value[0], args[i+1].value[0]]),
@@ -392,11 +392,10 @@ def DBSCAN(epsilon, min_points, file_id, TH_1, TH_2):
                                                         len_datasets[coord],
                                                         1, 0, [[], []], TH_1,
                                                         *neigh_squares)
-        # De moment podria no pasarli el cluster count de cada un i buscarlo
         dataset[comb],tmp_mat[comb],adj_mat[comb] = merge_task_ps_0(*fut_list_0)
-        tmp_mat[comb] = compss_wait_on(tmp_mat[comb])
-        with open("g1.txt", "a") as f:
-            f.write(str(tmp_mat[comb])+'\n')
+#        dataset[comb] = compss_wait_on(dataset[comb])
+#        with open("g2.txt", "a") as f:
+#            f.write(str(dataset[comb].value[0])+'\n')
         border_points[comb] = merge_task_ps_1(*fut_list_1)
 
     # Cluster Synchronisation
@@ -409,7 +408,6 @@ def DBSCAN(epsilon, min_points, file_id, TH_1, TH_2):
             neigh_squares_loc.append(coord)
             neigh_squares.append(dataset[coord])
             len_neighs += len_datasets[coord]
-        # TODO: make as INOUT instead of OUT, currently not working
         fut_list = orquestrate_sync_clusters(dataset[comb], adj_mat[comb],
                                              epsilon, comb, neigh_squares_loc,
                                              len_neighs, 1, 0, [], TH_2,
@@ -417,7 +415,6 @@ def DBSCAN(epsilon, min_points, file_id, TH_1, TH_2):
         adj_mat[comb] = merge_task(adj_mat[comb], *fut_list)
 
     # Cluster list update
-    # TODO: join the three
     border_points = dict_compss_wait_on(border_points, dimension_perms)
     tmp_mat = dict_compss_wait_on(tmp_mat, dimension_perms)
     adj_mat = dict_compss_wait_on(adj_mat, dimension_perms)
