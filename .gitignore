@@ -4,6 +4,11 @@
 #Ignore the normalized data files
 *n.txt
 
+#Ignore trace related files
+*.mpits
+*.sym
+set-0/
+
 #Ignore data files
 data/
 

@@ -254,6 +254,7 @@ def sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc, quocient,
                              if ((num % quocient) == res)]),
                   np.array([i for num, i in enumerate(neigh_data[1])
                             if ((num % quocient) == res)])]
+    print "Jelou: "+str(len(data.value[0]))+" "+str(len(neigh_data[0]))
     tmp_unwrap = [neigh_sq_loc[i] for i in range(len(neigh_sq_loc))
                   for j in range(len(args[i].value[1]))]
     tmp_unwrap = [i for num, i in enumerate(tmp_unwrap) if
@@ -393,9 +394,6 @@ def DBSCAN(epsilon, min_points, file_id, TH_1, TH_2):
                                                         1, 0, [[], []], TH_1,
                                                         *neigh_squares)
         dataset[comb],tmp_mat[comb],adj_mat[comb] = merge_task_ps_0(*fut_list_0)
-#        dataset[comb] = compss_wait_on(dataset[comb])
-#        with open("g2.txt", "a") as f:
-#            f.write(str(dataset[comb].value[0])+'\n')
         border_points[comb] = merge_task_ps_1(*fut_list_1)
 
     # Cluster Synchronisation
