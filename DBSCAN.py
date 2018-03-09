@@ -11,6 +11,7 @@ from pycompss.api.task import task
 from pycompss.api.api import compss_wait_on
 from pycompss.api.api import compss_delete_object
 from collections import defaultdict
+from collections import deque
 from classes.DS import DisjointSet
 from classes.Data import Data
 from ast import literal_eval
@@ -238,7 +239,6 @@ def merge_task(adj_mat, *args):
             for elem in list_elem:
                 if elem not in adj_mat_copy[num]:
                     adj_mat_copy[num].append(elem)
-    print adj_mat_copy
     return adj_mat_copy
 
 
@@ -246,7 +246,7 @@ def merge_task(adj_mat, *args):
 def sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc, quocient,
                   res, len_neighs, *args):
     # TODO: change *args
-    adj_mat_copy = [[] for _ in range(max(adj_mat[0], 1))]
+    adj_mat_copy = [deque() for _ in range(max(adj_mat[0], 1))]
     neigh_data = [np.vstack([i.value[0] for i in args]),
                   np.concatenate([i.value[1] for i in args])]
     neigh_data = [np.vstack([i for num, i in
