@@ -30,6 +30,7 @@ runcompss \
     --lang=python \
     --tracing \
     --graph \
+    --debug=true \
     ./DBSCAN.py 0.1 10 1 50 100
 #   ./DBSCAN.py 0.1 10 1 50 100
 #python DBSCAN_4_PyC.py 0.1 10 1

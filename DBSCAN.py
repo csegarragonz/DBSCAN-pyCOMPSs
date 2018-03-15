@@ -269,9 +269,9 @@ def sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc, quocient,
                 if poss_neigh:
                     clust_ind = int(neigh_data[1][num2])
                     adj_mat_elem = [loc2, clust_ind]
-                    if ((clust_ind > -1) and
-                        (adj_mat_elem not in
-                            adj_mat_copy[current_clust_id])):
+                    if (clust_ind > -1):
+#                        and (adj_mat_elem not in
+#                            adj_mat_copy[current_clust_id])):
                         adj_mat_copy[current_clust_id].append(adj_mat_elem)
     return adj_mat_copy
 
