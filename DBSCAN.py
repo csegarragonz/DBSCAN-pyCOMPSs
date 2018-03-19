@@ -324,7 +324,7 @@ def expand_cluster(data, epsilon, border_points, dimension_perms, links_list,
     # path = "/gpfs/projects/bsc19/COMPSs_DATASETS/dbscan/"+str(file_id)
     path = "~/DBSCAN/data/"+str(file_id)
     path = os.path.expanduser(path)
-    tmp_string = path+"/"+str(square[0])
+    tmp_string = path+"/old/"+str(square[0])
     for num, j in enumerate(square):
         if num > 0:
             tmp_string += "_"+str(j)
