@@ -254,7 +254,6 @@ def sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc, quocient,
                              if ((num % quocient) == res)]),
                   np.array([i for num, i in enumerate(neigh_data[1])
                             if ((num % quocient) == res)])]
-    print "Jelou: "+str(len(data.value[0]))+" "+str(len(neigh_data[0]))
     tmp_unwrap = [neigh_sq_loc[i] for i in range(len(neigh_sq_loc))
                   for j in range(len(args[i].value[1]))]
     tmp_unwrap = [i for num, i in enumerate(tmp_unwrap) if
@@ -269,9 +268,9 @@ def sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc, quocient,
                 if poss_neigh:
                     clust_ind = int(neigh_data[1][num2])
                     adj_mat_elem = [loc2, clust_ind]
-                    if (clust_ind > -1):
-#                        and (adj_mat_elem not in
-#                            adj_mat_copy[current_clust_id])):
+                    if ((clust_ind > -1)
+                        and (adj_mat_elem not in
+                            adj_mat_copy[current_clust_id])):
                         adj_mat_copy[current_clust_id].append(adj_mat_elem)
     return adj_mat_copy
 
@@ -324,7 +323,7 @@ def expand_cluster(data, epsilon, border_points, dimension_perms, links_list,
     # path = "/gpfs/projects/bsc19/COMPSs_DATASETS/dbscan/"+str(file_id)
     path = "~/DBSCAN/data/"+str(file_id)
     path = os.path.expanduser(path)
-    tmp_string = path+"/old/"+str(square[0])
+    tmp_string = path+"/"+str(square[0])
     for num, j in enumerate(square):
         if num > 0:
             tmp_string += "_"+str(j)
@@ -381,7 +380,6 @@ def DBSCAN(epsilon, min_points, file_id, TH_1, TH_2):
                                                    dimensions)
 
     # Partial Scan And Initial Cluster merging
-#    dataset_tmp = dict_compss_wait_on(dataset_tmp, dimension_perms)
     for comb in itertools.product(*dimension_perms):
         adj_mat[comb] = [0]
         tmp_mat[comb] = [0]
@@ -425,7 +423,6 @@ def DBSCAN(epsilon, min_points, file_id, TH_1, TH_2):
         expand_cluster(dataset[comb], epsilon, border_points[comb],
                        dimension_perms, links_list, comb, tmp_mat[comb],
                        file_id, *neigh_squares)
-    print links_list
     print "Time elapsed: " + str(time.time()-initial_time)
     return 1
 
