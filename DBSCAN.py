@@ -11,6 +11,7 @@ from pycompss.api.task import task
 from pycompss.api.api import compss_wait_on
 from pycompss.api.api import compss_delete_object
 from collections import defaultdict
+from collections import deque
 from classes.DS import DisjointSet
 from classes.Data import Data
 from ast import literal_eval
@@ -238,7 +239,6 @@ def merge_task(adj_mat, *args):
             for elem in list_elem:
                 if elem not in adj_mat_copy[num]:
                     adj_mat_copy[num].append(elem)
-    print adj_mat_copy
     return adj_mat_copy
 
 
@@ -246,7 +246,7 @@ def merge_task(adj_mat, *args):
 def sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc, quocient,
                   res, len_neighs, *args):
     # TODO: change *args
-    adj_mat_copy = [[] for _ in range(max(adj_mat[0], 1))]
+    adj_mat_copy = [deque() for _ in range(max(adj_mat[0], 1))]
     neigh_data = [np.vstack([i.value[0] for i in args]),
                   np.concatenate([i.value[1] for i in args])]
     neigh_data = [np.vstack([i for num, i in
@@ -254,7 +254,6 @@ def sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc, quocient,
                              if ((num % quocient) == res)]),
                   np.array([i for num, i in enumerate(neigh_data[1])
                             if ((num % quocient) == res)])]
-    print "Jelou: "+str(len(data.value[0]))+" "+str(len(neigh_data[0]))
     tmp_unwrap = [neigh_sq_loc[i] for i in range(len(neigh_sq_loc))
                   for j in range(len(args[i].value[1]))]
     tmp_unwrap = [i for num, i in enumerate(tmp_unwrap) if
@@ -269,8 +268,8 @@ def sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc, quocient,
                 if poss_neigh:
                     clust_ind = int(neigh_data[1][num2])
                     adj_mat_elem = [loc2, clust_ind]
-                    if ((clust_ind > -1) and
-                        (adj_mat_elem not in
+                    if ((clust_ind > -1)
+                        and (adj_mat_elem not in
                             adj_mat_copy[current_clust_id])):
                         adj_mat_copy[current_clust_id].append(adj_mat_elem)
     return adj_mat_copy
@@ -381,7 +380,6 @@ def DBSCAN(epsilon, min_points, file_id, TH_1, TH_2):
                                                    dimensions)
 
     # Partial Scan And Initial Cluster merging
-#    dataset_tmp = dict_compss_wait_on(dataset_tmp, dimension_perms)
     for comb in itertools.product(*dimension_perms):
         adj_mat[comb] = [0]
         tmp_mat[comb] = [0]
@@ -425,7 +423,6 @@ def DBSCAN(epsilon, min_points, file_id, TH_1, TH_2):
         expand_cluster(dataset[comb], epsilon, border_points[comb],
                        dimension_perms, links_list, comb, tmp_mat[comb],
                        file_id, *neigh_squares)
-    print links_list
     print "Time elapsed: " + str(time.time()-initial_time)
     return 1
 
