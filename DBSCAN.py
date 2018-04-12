@@ -9,6 +9,7 @@
 from pycompss.api.task import task
 # from pycompss.api.parameter import INOUT
 from pycompss.api.api import compss_wait_on
+from pycompss.api.api import compss_barrier
 from pycompss.api.api import compss_delete_object
 from collections import defaultdict
 from collections import deque
@@ -21,7 +22,6 @@ import time
 import numpy as np
 import sys
 import os
-
 
 def count_lines(tupla, file_id):
     # path = "/gpfs/projects/bsc19/COMPSs_DATASETS/dbscan/"+str(file_id)
@@ -37,7 +37,6 @@ def count_lines(tupla, file_id):
             pass
         return i+1
 
-
 def orquestrate_init_data(tupla, file_id, len_data, quocient,
                           res, fut_list, TH_1):
     THRESHOLD = TH_1
@@ -52,7 +51,6 @@ def orquestrate_init_data(tupla, file_id, len_data, quocient,
         tmp_f = init_data(tupla, file_id, quocient, res)
         fut_list.append(tmp_f)
     return fut_list
-
 
 @task(returns=1)
 def init_data(tupla, file_id, quocient, res):
@@ -73,14 +71,12 @@ def init_data(tupla, file_id, quocient, res):
     data_pos.value = [data_pos.value, tmp_vec]
     return data_pos
 
-
 @task(returns=1)
 def merge_task_init(*args):
     tmp_data = Data()
     tmp_data.value = [np.vstack([i.value[0] for i in args]),
                       np.concatenate([i.value[1] for i in args])]
     return tmp_data
-
 
 def neigh_squares_query(square, epsilon, dimensions):
     # Only multiples of 10 are supported as possible number
@@ -101,7 +97,6 @@ def neigh_squares_query(square, epsilon, dimensions):
             neigh_squares.append(tuple(current))
     neigh_squares.append(tuple(square))
     return tuple(neigh_squares)
-
 
 def orquestrate_scan_merge(data, epsilon, min_points, len_neighs, quocient,
                            res, fut_list, TH_1, *args):
@@ -129,7 +124,6 @@ def orquestrate_scan_merge(data, epsilon, min_points, len_neighs, quocient,
         for num, _list in enumerate(fut_list):
             _list.append(obj[num])
     return fut_list[0], fut_list[1]
-
 
 @task(returns=2)
 def partial_scan_merge(data, epsilon, min_points, quocient, res, *args):
@@ -181,7 +175,6 @@ def partial_scan_merge(data, epsilon, min_points, quocient, res, *args):
                 cluster_count += 1
     return data_copy, non_assigned
 
-
 @task(returns=3)
 def merge_task_ps_0(*args):
     num_clust_max = max(max([i for i in args[0].value[1]])+1,0)
@@ -194,7 +187,6 @@ def merge_task_ps_0(*args):
         num_clust_max += max(max([j for j in args[i+1].value[1]])+1, 0)
     return data, [int(num_clust_max)], [int(num_clust_max)]
 
-
 @task(returns=defaultdict)
 def merge_task_ps_1(*args):
     # This one is for data type
@@ -204,12 +196,10 @@ def merge_task_ps_1(*args):
             border_points[key] += _dict[key]
     return border_points
 
-
 def dict_compss_wait_on(dicc, dimension_perms):
     for comb in itertools.product(*dimension_perms):
         dicc[comb] = compss_wait_on(dicc[comb])
     return dicc
-
 
 def orquestrate_sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc,
                               len_neighs, quocient, res, fut_list, TH_2, *args):
@@ -230,7 +220,6 @@ def orquestrate_sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc,
                                       *args))
     return fut_list
 
-
 @task(returns=list)
 def merge_task(adj_mat, *args):
     adj_mat_copy = [[] for _ in range(max(adj_mat[0], 1))]
@@ -240,7 +229,6 @@ def merge_task(adj_mat, *args):
                 if elem not in adj_mat_copy[num]:
                     adj_mat_copy[num].append(elem)
     return adj_mat_copy
-
 
 @task(returns=list)
 def sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc, quocient,
@@ -274,7 +262,6 @@ def sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc, quocient,
                         adj_mat_copy[current_clust_id].append(adj_mat_elem)
     return adj_mat_copy
 
-
 def unwrap_adj_mat(tmp_mat, adj_mat, neigh_sq_coord, dimension_perms):
     links_list = []
     for comb in itertools.product(*dimension_perms):
@@ -288,7 +275,6 @@ def unwrap_adj_mat(tmp_mat, adj_mat, neigh_sq_coord, dimension_perms):
             mf_set.union(adj_mat[comb][0][k], adj_mat[comb][0][k+1])
     out = mf_set.get()
     return out
-
 
 @task()
 def expand_cluster(data, epsilon, border_points, dimension_perms, links_list,
@@ -333,7 +319,6 @@ def expand_cluster(data, epsilon, border_points, dimension_perms, links_list,
         f_out.write(str(data_copy.value[0][num])+" "
                     + str(int(data_copy.value[1][num])) + "\n")
     f_out.close()
-
 
 def DBSCAN(epsilon, min_points, file_id, TH_1, TH_2):
     #   TODO: code from scratch the Disjoint Set
@@ -425,7 +410,6 @@ def DBSCAN(epsilon, min_points, file_id, TH_1, TH_2):
                        file_id, *neigh_squares)
     print "Time elapsed: " + str(time.time()-initial_time)
     return 1
-
 
 if __name__ == "__main__":
     DBSCAN(float(sys.argv[1]), int(sys.argv[2]), sys.argv[3], int(sys.argv[4]),
