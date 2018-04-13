@@ -10,9 +10,11 @@ from pycompss.api.task import task
     # DBSCAN Imports
 from classes.Data import Data
 
-def count_lines(tupla, file_id):
-    # path = "/gpfs/projects/bsc19/COMPSs_DATASETS/dbscan/"+str(file_id)
-    path = "~/DBSCAN/data/"+str(file_id)
+def count_lines(tupla, file_id, is_mn):
+    if is_mn:
+        path = "/gpfs/projects/bsc19/COMPSs_DATASETS/dbscan/"+str(file_id)
+    else:
+        path = "~/DBSCAN/data/"+str(file_id)
     path = os.path.expanduser(path)
     tmp_string = path+"/"+str(tupla[0])
     for num, j in enumerate(tupla):
@@ -25,25 +27,27 @@ def count_lines(tupla, file_id):
         return i+1
 
 def orquestrate_init_data(tupla, file_id, len_data, quocient,
-                          res, fut_list, TH_1):
+                          res, fut_list, TH_1, is_mn):
     THRESHOLD = TH_1
     if (len_data/quocient) > THRESHOLD:
         fut_list = orquestrate_init_data(tupla, file_id, len_data,
                                          quocient*2, res*2 + 0, fut_list,
-                                         THRESHOLD)
+                                         THRESHOLD, is_mn)
         fut_list = orquestrate_init_data(tupla, file_id, len_data,
                                          quocient*2, res*2 + 1, fut_list,
-                                         THRESHOLD)
+                                         THRESHOLD, is_mn)
     else:
-        tmp_f = init_data(tupla, file_id, quocient, res)
+        tmp_f = init_data(tupla, file_id, quocient, res, is_mn)
         fut_list.append(tmp_f)
     return fut_list
 
 @task(returns=1)
-def init_data(tupla, file_id, quocient, res):
+def init_data(tupla, file_id, quocient, res, is_mn):
     data_pos = Data()
-    # path = "/gpfs/projects/bsc19/COMPSs_DATASETS/dbscan/"+str(file_id)
-    path = "~/DBSCAN/data/"+str(file_id)
+    if is_mn:
+        path = "/gpfs/projects/bsc19/COMPSs_DATASETS/dbscan/"+str(file_id)
+    else:
+        path = "~/DBSCAN/data/"+str(file_id)
     path = os.path.expanduser(path)
     tmp_string = path+"/"+str(tupla[0])
     for num, j in enumerate(tupla):

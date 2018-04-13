@@ -28,7 +28,7 @@ def unwrap_adj_mat(tmp_mat, adj_mat, neigh_sq_coord, dimension_perms):
 
 @task()
 def expand_cluster(data, epsilon, border_points, dimension_perms, links_list,
-                   square, cardinal, file_id, *args):
+                   square, cardinal, file_id, is_mn, *args):
     data_copy = Data()
     data_copy.value = copy.deepcopy(data.value)
     tmp_unwrap_2 = [i.value[1] for i in args]
@@ -56,8 +56,10 @@ def expand_cluster(data, epsilon, border_points, dimension_perms, links_list,
                     data_copy.value[1][num] = pair[1]
 
     # Update all files (for the moment writing to another one)
-    # path = "/gpfs/projects/bsc19/COMPSs_DATASETS/dbscan/"+str(file_id)
-    path = "~/DBSCAN/data/"+str(file_id)
+    if is_mn:
+        path = "/gpfs/projects/bsc19/COMPSs_DATASETS/dbscan/"+str(file_id)
+    else:
+        path = "~/DBSCAN/data/"+str(file_id)
     path = os.path.expanduser(path)
     tmp_string = path+"/"+str(square[0])
     for num, j in enumerate(square):

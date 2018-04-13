@@ -28,7 +28,7 @@ EXEC_FILE=${scriptDir}/rcDBSCAN.py
 
 runcompss \
     --lang=python \
-    ./DBSCAN_Verbose.py 0.1 10 1 50 100
+    ./DBSCAN.py 0.1 10 1
 #    ./DBSCAN.py 0.1 10 1 50 100
 #python DBSCAN.py 0.1 10 1 50 100
 #runcompss --lang=python ./Gen_Data_DBSCAN.py 3 [100,100]
