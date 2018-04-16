@@ -17,21 +17,39 @@
 #
 #PyCOMPSs Mathematical Library: Clustering: DBSCAN
 #=================================================
-#    This file contains different test run commands.
+#   This file contains different test run commands. 
 
-#Running without COMPSs. Comment all the @task, compss_wait_on and COMPSs imports.
-#python ./launchDBSCAN.py ./data/moons.txt 0.015 10 1 2D
+# Running with the help flag will output the following:
+# runcompss DBSCAN.py --help
+# usage: DBSCAN.py [-h] [--is_mn] [--print_times] epsilon min_points datafile
+#
+# DBSCAN Clustering Algorithm implemented within the PyCOMPSs framework. For a
+# detailed guide on the usage see the user guide provided.
+#
+# positional arguments:
+#   epsilon        Radius that defines the maximum distance under which
+#                  neighbors are looked for.
+#   min_points     Minimum number of neighbors for a point to be considered core
+#                  point.
+#   datafile       Numeric identifier for the dataset to be used. For further
+#                  information see the user guide provided.
+#
+# optional arguments:
+#   -h, --help     show this help message and exit
+#   --is_mn        If set to true, this tells the algorithm that you are running
+#                  the code in the MN cluster, setting the correct paths to the
+#                  data files and setting the correct parameters. Otherwise it
+#                  assumes you are running the code locally.
+#   --print_times  If set to true, the timing for each task will be printed
+#                  through the standard output. NOTE THAT THIS WILL LEAD TO
+#                  EXTRA BARRIERS INTRODUCED IN THE CODE. Otherwise only the
+#                  total time elapsed is printed.
+#
 
-#Local execution: -d for debugging, -t for tracing and -g for the dependency graph.
-scriptDir=$(pwd)/$(dirname $0)
-EXEC_FILE=${scriptDir}/rcDBSCAN.py
-
+# DBSCAN Local execution: -d for debugging, -t for tracing and -g for the dependency graph.
 runcompss \
     --lang=python \
     ./DBSCAN.py 0.1 10 1
-#    ./DBSCAN.py 0.1 10 1 50 100
-#python DBSCAN.py 0.1 10 1 50 100
-#runcompss --lang=python ./Gen_Data_DBSCAN.py 3 [100,100]
 #python Gen_Data_DBSCAN.py 1 [10,10]
 #    --tracing \
 #    --debug=true \
