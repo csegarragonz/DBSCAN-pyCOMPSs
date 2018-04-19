@@ -48,9 +48,8 @@ def DBSCAN(epsilon, min_points, datafile, is_mn, print_times, *args, **kwargs):
         TH_2=100
 
     # Initial Definitions (necessary?)
-    epsilon = float(epsilon)
-    min_points = int(min_points)
     dataset_info = "dataset.txt"
+    count_tasks = 0
 
     # Data inisialitation
     dimensions = []
@@ -69,8 +68,6 @@ def DBSCAN(epsilon, min_points, datafile, is_mn, print_times, *args, **kwargs):
     tmp_mat = defaultdict()
     border_points = defaultdict()
     for comb in itertools.product(*dimension_perms):
-        # TODO: implement init_data as a class method maybe inside
-        # the initialisation
         dataset[comb] = Data()
         dataset_tmp[comb] = Data()
         len_datasets[comb] = count_lines(comb, datafile, is_mn)
@@ -78,7 +75,7 @@ def DBSCAN(epsilon, min_points, datafile, is_mn, print_times, *args, **kwargs):
         tmp_mat[comb] = [0]
         border_points[comb] = defaultdict(list)
         fut_list = orquestrate_init_data(comb, datafile, len_datasets[comb], 1,
-                                         0, [], TH_1, is_mn)
+                                         0, [], TH_1, is_mn, count_tasks)
         dataset_tmp[comb] = merge_task_init(*fut_list)
         neigh_sq_coord[comb] = neigh_squares_query(comb, epsilon,
                                                    dimensions)
@@ -99,6 +96,7 @@ def DBSCAN(epsilon, min_points, datafile, is_mn, print_times, *args, **kwargs):
                                                         epsilon, min_points,
                                                         len_datasets[coord],
                                                         1, 0, [[], []], TH_1,
+                                                        count_tasks,
                                                         *neigh_squares)
         dataset[comb],tmp_mat[comb],adj_mat[comb] = merge_task_ps_0(*fut_list_0)
         border_points[comb] = merge_task_ps_1(*fut_list_1)
@@ -144,6 +142,7 @@ def DBSCAN(epsilon, min_points, datafile, is_mn, print_times, *args, **kwargs):
         expand_cluster(dataset[comb], epsilon, border_points[comb],
                        dimension_perms, links_list, comb, tmp_mat[comb],
                        datafile, is_mn, *neigh_squares)
+    print "Total number of tasks scheduled: "+str(count_tasks)
     print "Time elapsed: " + str(time.time()-initial_time)
     return 1
 

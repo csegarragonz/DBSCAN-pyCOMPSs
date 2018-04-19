@@ -27,16 +27,18 @@ def count_lines(tupla, file_id, is_mn):
         return i+1
 
 def orquestrate_init_data(tupla, file_id, len_data, quocient,
-                          res, fut_list, TH_1, is_mn):
+                          res, fut_list, TH_1, is_mn,
+                          count_tasks):
     THRESHOLD = TH_1
     if (len_data/quocient) > THRESHOLD:
         fut_list = orquestrate_init_data(tupla, file_id, len_data,
                                          quocient*2, res*2 + 0, fut_list,
-                                         THRESHOLD, is_mn)
+                                         THRESHOLD, is_mn, count_tasks)
         fut_list = orquestrate_init_data(tupla, file_id, len_data,
                                          quocient*2, res*2 + 1, fut_list,
-                                         THRESHOLD, is_mn)
+                                         THRESHOLD, is_mn, count_tasks)
     else:
+        count_tasks += 1
         tmp_f = init_data(tupla, file_id, quocient, res, is_mn)
         fut_list.append(tmp_f)
     return fut_list

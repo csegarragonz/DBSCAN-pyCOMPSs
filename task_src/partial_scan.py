@@ -8,7 +8,7 @@ from pycompss.api.task import task
 from classes.Data import Data
 
 def orquestrate_scan_merge(data, epsilon, min_points, len_neighs, quocient,
-                           res, fut_list, TH_1, *args):
+                           res, fut_list, TH_1, count_tasks, *args):
     THRESHOLD = TH_1
     if (len_neighs/quocient) > THRESHOLD:
         fut_list[0], fut_list[1] = orquestrate_scan_merge(data, epsilon,
@@ -17,6 +17,7 @@ def orquestrate_scan_merge(data, epsilon, min_points, len_neighs, quocient,
                                                           quocient*2,
                                                           res*2 + 0,
                                                           fut_list, THRESHOLD,
+                                                          count_tasks,
                                                           *args)
         fut_list[0], fut_list[1] = orquestrate_scan_merge(data, epsilon,
                                                           min_points,
@@ -24,9 +25,11 @@ def orquestrate_scan_merge(data, epsilon, min_points, len_neighs, quocient,
                                                           quocient*2,
                                                           res*2 + 1,
                                                           fut_list, THRESHOLD,
+                                                          count_tasks,
                                                           *args)
     else:
         obj = [[], []]
+        count_tasks += 1
         obj[0], obj[1] = partial_scan_merge(data, epsilon, min_points,
                                             quocient, res, *args)
         for num, _list in enumerate(fut_list):
