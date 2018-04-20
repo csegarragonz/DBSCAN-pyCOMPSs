@@ -1,32 +1,24 @@
 #Imports
-    # General Imports
-from collections import defaultdict
+from collections import defaultdict # General Imports
 import numpy as np
-    # PyCOMPSs Imports
-from pycompss.api.task import task
-    # DBSCAN Imports
-from classes.Data import Data
+from pycompss.api.task import task # PyCOMPSs Imports
+from classes.Data import Data # DBSCAN Imports
 
 def orquestrate_scan_merge(data, epsilon, min_points, len_neighs, quocient,
                            res, fut_list, TH_1, count_tasks, *args):
-    THRESHOLD = TH_1
-    if (len_neighs/quocient) > THRESHOLD:
-        fut_list[0], fut_list[1] = orquestrate_scan_merge(data, epsilon,
-                                                          min_points,
-                                                          len_neighs,
-                                                          quocient*2,
-                                                          res*2 + 0,
-                                                          fut_list, THRESHOLD,
-                                                          count_tasks,
-                                                          *args)
-        fut_list[0], fut_list[1] = orquestrate_scan_merge(data, epsilon,
-                                                          min_points,
-                                                          len_neighs,
-                                                          quocient*2,
-                                                          res*2 + 1,
-                                                          fut_list, THRESHOLD,
-                                                          count_tasks,
-                                                          *args)
+    if (len_neighs/quocient) > TH_1:
+        [fut_list[0],
+         fut_list[1],
+         count_tasks] = orquestrate_scan_merge(data, epsilon, min_points,
+                                               len_neighs, quocient*2, res*2 + 0,
+                                               fut_list, TH_1, count_tasks,
+                                               *args)
+        [fut_list[0],
+         fut_list[1],
+         count_tasks] = orquestrate_scan_merge(data, epsilon, min_points,
+                                               len_neighs, quocient*2, res*2 + 1,
+                                               fut_list, TH_1, count_tasks,
+                                               *args)
     else:
         obj = [[], []]
         count_tasks += 1
@@ -34,7 +26,7 @@ def orquestrate_scan_merge(data, epsilon, min_points, len_neighs, quocient,
                                             quocient, res, *args)
         for num, _list in enumerate(fut_list):
             _list.append(obj[num])
-    return fut_list[0], fut_list[1]
+    return fut_list[0], fut_list[1], count_tasks
 
 @task(returns=2)
 def partial_scan_merge(data, epsilon, min_points, quocient, res, *args):
@@ -106,4 +98,3 @@ def merge_task_ps_1(*args):
         for key in _dict:
             border_points[key] += _dict[key]
     return border_points
-

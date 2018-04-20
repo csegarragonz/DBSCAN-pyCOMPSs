@@ -1,31 +1,30 @@
 #Imports
-    # General Imports
-from collections import defaultdict
+from collections import defaultdict # General Imports
 import os
 import numpy as np
-    # PyCOMPSs Imports
-from pycompss.api.task import task
-    # DBSCAN Imports
-from classes.Data import Data
+from pycompss.api.task import task # PyCOMPSs Imports
+from classes.Data import Data # DBSCAN Imports
 
 def orquestrate_sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc,
-                              len_neighs, quocient, res, fut_list, TH_2, *args):
-    # TODO: currently hardcoded
-    THRESHOLD = TH_2
-    if (len_neighs/quocient) > THRESHOLD:
-        fut_list = orquestrate_sync_clusters(data, adj_mat, epsilon, coord,
-                                             neigh_sq_loc, len_neighs,
-                                             quocient*2, res*2 + 0, fut_list,
-                                             THRESHOLD, *args)
-        fut_list = orquestrate_sync_clusters(data, adj_mat, epsilon, coord,
-                                             neigh_sq_loc, len_neighs,
-                                             quocient*2, res*2 + 1, fut_list,
-                                             THRESHOLD, *args)
+                              len_neighs, quocient, res, fut_list, TH_2,
+                              count_tasks, *args):
+    if (len_neighs/quocient) > TH_2:
+        [fut_list,
+         count_tasks] = orquestrate_sync_clusters(data, adj_mat, epsilon, coord,
+                                                  neigh_sq_loc, len_neighs,
+                                                  quocient*2, res*2 + 0, fut_list,
+                                                  TH_2, count_tasks, *args)
+        [fut_list,
+         count_tasks] = orquestrate_sync_clusters(data, adj_mat, epsilon, coord,
+                                                  neigh_sq_loc, len_neighs,
+                                                  quocient*2, res*2 + 1, fut_list,
+                                                  TH_2, count_tasks, *args)
     else:
+        count_tasks += 1
         fut_list.append(sync_clusters(data, adj_mat, epsilon, coord,
                                       neigh_sq_loc, quocient, res, len_neighs,
                                       *args))
-    return fut_list
+    return fut_list, count_tasks
 
 @task(returns=list)
 def merge_task_sync(adj_mat, *args):
@@ -69,4 +68,3 @@ def sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc, quocient,
                             adj_mat_copy[current_clust_id])):
                         adj_mat_copy[current_clust_id].append(adj_mat_elem)
     return adj_mat_copy
-

@@ -6,7 +6,6 @@ import sys
 import numpy as np
 from itertools import product
 
-
 @task(returns=list)
 def init_data(comb, path, num_points_max, centers, std):
     data = []
@@ -36,7 +35,6 @@ def init_data(comb, path, num_points_max, centers, std):
         np.savetxt(path, data)
         return [1]
 #    return data_pos
-
 
 def main(file_count, dimensions):
     dimensions = literal_eval(dimensions)

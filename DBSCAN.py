@@ -6,8 +6,7 @@
 # carlos.segarra @ bsc.es
 
 # IMPORTED MODULES
-    # General Imports
-from collections import defaultdict
+from collections import defaultdict # General Imports
 from ast import literal_eval
 import itertools
 import time
@@ -16,13 +15,11 @@ import numpy as np
 import sys
 import os
 import argparse
-    # PyCOMPSs Imports
-from pycompss.api.task import task
+from pycompss.api.task import task # PyCOMPSs Imports
 from pycompss.api.api import compss_wait_on
 from pycompss.api.api import compss_barrier
 from pycompss.api.api import compss_delete_object
-    # DBSCAN Imports
-from classes.Data import Data
+from classes.Data import Data # DBSCAN Imports
 from task_src.init_data import count_lines, orquestrate_init_data
 from task_src.init_data import init_data, merge_task_init, neigh_squares_query
 from task_src.partial_scan import orquestrate_scan_merge, partial_scan_merge
@@ -74,8 +71,11 @@ def DBSCAN(epsilon, min_points, datafile, is_mn, print_times, *args, **kwargs):
         adj_mat[comb] = [0]
         tmp_mat[comb] = [0]
         border_points[comb] = defaultdict(list)
-        fut_list = orquestrate_init_data(comb, datafile, len_datasets[comb], 1,
-                                         0, [], TH_1, is_mn, count_tasks)
+        fut_list, count_tasks = orquestrate_init_data(comb, datafile,
+                                                      len_datasets[comb], 1,
+                                                      0, [], TH_1, is_mn,
+                                                      count_tasks)
+        count_tasks += 1
         dataset_tmp[comb] = merge_task_init(*fut_list)
         neigh_sq_coord[comb] = neigh_squares_query(comb, epsilon,
                                                    dimensions)
@@ -92,12 +92,13 @@ def DBSCAN(epsilon, min_points, datafile, is_mn, print_times, *args, **kwargs):
         neigh_squares = []
         for coord in neigh_sq_coord[comb]:
             neigh_squares.append(dataset_tmp[coord])
-        fut_list_0, fut_list_1 = orquestrate_scan_merge(dataset_tmp[comb],
-                                                        epsilon, min_points,
-                                                        len_datasets[coord],
-                                                        1, 0, [[], []], TH_1,
-                                                        count_tasks,
-                                                        *neigh_squares)
+        [fut_list_0,
+         fut_list_1,
+         count_tasks] = orquestrate_scan_merge(dataset_tmp[comb], epsilon,
+                                               min_points, len_datasets[coord],
+                                               1, 0, [[], []], TH_1, count_tasks,
+                                               *neigh_squares)
+        count_tasks += 2
         dataset[comb],tmp_mat[comb],adj_mat[comb] = merge_task_ps_0(*fut_list_0)
         border_points[comb] = merge_task_ps_1(*fut_list_1)
 
@@ -117,10 +118,13 @@ def DBSCAN(epsilon, min_points, datafile, is_mn, print_times, *args, **kwargs):
             neigh_squares_loc.append(coord)
             neigh_squares.append(dataset[coord])
             len_neighs += len_datasets[coord]
-        fut_list = orquestrate_sync_clusters(dataset[comb], adj_mat[comb],
-                                             epsilon, comb, neigh_squares_loc,
-                                             len_neighs, 1, 0, [], TH_2,
-                                             *neigh_squares)
+        [fut_list,
+         count_tasks] = orquestrate_sync_clusters(dataset[comb], adj_mat[comb],
+                                                  epsilon, comb,
+                                                  neigh_squares_loc,
+                                                  len_neighs, 1, 0, [], TH_2,
+                                                  count_tasks, *neigh_squares)
+        count_tasks += 1
         adj_mat[comb] = merge_task_sync(adj_mat[comb], *fut_list)
 
     # Cluster list update
@@ -139,6 +143,7 @@ def DBSCAN(epsilon, min_points, datafile, is_mn, print_times, *args, **kwargs):
         neigh_squares = []
         for coord in neigh_sq_coord[comb]:
             neigh_squares.append(dataset[coord])
+        count_tasks += 1
         expand_cluster(dataset[comb], epsilon, border_points[comb],
                        dimension_perms, links_list, comb, tmp_mat[comb],
                        datafile, is_mn, *neigh_squares)
