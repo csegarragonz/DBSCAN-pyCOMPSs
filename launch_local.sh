@@ -13,8 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-#@author: csegarra
-#
 #PyCOMPSs Mathematical Library: Clustering: DBSCAN
 #=================================================
 #   This file contains different test run commands. 
@@ -50,11 +48,3 @@
 runcompss \
     --lang=python \
     ./DBSCAN.py 0.1 10 1
-#python Gen_Data_DBSCAN.py 1 [10,10]
-#    --tracing \
-#    --debug=true \
-#    --project=/home/csegarra/DBTRASH/mem/memory_usage_test.xml \
-
-
-#Running on a Cluster with COMPSs installed and all the dependencies.
-#enqueue_compss --lang=python --num_nodes=6 --exec_time=10 --worker_working_dir=gpfs/home/bsc19/bsc19685/tmp/ ./launchDBSCAN.py ./data/blobs.txt 0.015 10 24

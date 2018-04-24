@@ -1,0 +1,28 @@
+results/
+ext_versions/
+misc/
+exclude_list.txt
+
+#Ignore all the .pyc files
+*.pyc
+*.pyo
+*.swp
+
+#Ignore the normalized data files
+*n.txt
+
+#Ignore trace related files
+*.mpits
+*.sym
+set-0/
+
+# Ignore Git related stuff
+.git/
+.gitignore
+
+#Ignore useful papers
+papers/
+Pap_DBSCAN/
+
+#Ignore test files
+test.py
