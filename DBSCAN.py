@@ -20,6 +20,7 @@ from pycompss.api.api import compss_wait_on
 from pycompss.api.api import compss_barrier
 from pycompss.api.api import compss_delete_object
 from classes.Data import Data # DBSCAN Imports
+from classes.square import Square
 from task_src.init_data import count_lines, orquestrate_init_data
 from task_src.init_data import init_data, merge_task_init, neigh_squares_query
 from task_src.partial_scan import orquestrate_scan_merge, partial_scan_merge
@@ -65,8 +66,8 @@ def DBSCAN(epsilon, min_points, datafile, is_mn, print_times, *args, **kwargs):
     tmp_mat = defaultdict()
     border_points = defaultdict()
     for comb in itertools.product(*dimension_perms):
-        # dataset[comb] = Square(comb, neigh_sq_coord, sq_used)
-        dataset[comb] = Data()
+        dataset[comb] = Square(comb, epsilon, dimensions)
+        count_tasks = dataset[comb].init_data(datafile, is_mn, TH_1, count_tasks)
         dataset_tmp[comb] = Data()
         len_datasets[comb] = count_lines(comb, datafile, is_mn)
         adj_mat[comb] = [0]
@@ -77,9 +78,11 @@ def DBSCAN(epsilon, min_points, datafile, is_mn, print_times, *args, **kwargs):
                                                       0, [], TH_1, is_mn,
                                                       count_tasks)
         count_tasks += 1
+        # dataset[comb].points[comb]
         dataset_tmp[comb] = merge_task_init(*fut_list)
         neigh_sq_coord[comb] = neigh_squares_query(comb, epsilon,
                                                    dimensions)
+
     if print_times:
         compss_barrier()
         print "Data Inisialisation Tasks Finished"

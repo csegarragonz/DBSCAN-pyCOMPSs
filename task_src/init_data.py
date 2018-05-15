@@ -68,6 +68,11 @@ def merge_task_init(*args):
                       np.concatenate([i.value[1] for i in args])]
     return tmp_data
 
+@task(returns=1)
+def merge_task_init_data(*args):
+    tmp_data = np.vstack([i.value[0] for i in args])
+    return tmp_data
+
 def neigh_squares_query(square, epsilon, dimensions):
     # Only multiples of 10 are supported as possible number
     # of squares per side.
