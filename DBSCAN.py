@@ -65,6 +65,7 @@ def DBSCAN(epsilon, min_points, datafile, is_mn, print_times, *args, **kwargs):
     tmp_mat = defaultdict()
     border_points = defaultdict()
     for comb in itertools.product(*dimension_perms):
+        # dataset[comb] = Square(comb, neigh_sq_coord, sq_used)
         dataset[comb] = Data()
         dataset_tmp[comb] = Data()
         len_datasets[comb] = count_lines(comb, datafile, is_mn)
