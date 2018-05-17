@@ -23,8 +23,6 @@ from classes.Data import Data # DBSCAN Imports
 from classes.square import Square
 from task_src.init_data import count_lines, orquestrate_init_data
 from task_src.init_data import init_data, merge_task_init, neigh_squares_query
-from task_src.partial_scan import orquestrate_scan_merge, partial_scan_merge
-from task_src.partial_scan import merge_task_ps_0, merge_task_ps_1
 from task_src.dict_wait_on import dict_compss_wait_on
 from task_src.sync_clusters import orquestrate_sync_clusters, sync_clusters
 from task_src.sync_clusters import merge_task_sync
@@ -67,21 +65,27 @@ def DBSCAN(epsilon, min_points, datafile, is_mn, print_times, *args, **kwargs):
     border_points = defaultdict()
     for comb in itertools.product(*dimension_perms):
         dataset[comb] = Square(comb, epsilon, dimensions)
-        count_tasks = dataset[comb].init_data(datafile, is_mn, TH_1, count_tasks)
-        dataset_tmp[comb] = Data()
-        len_datasets[comb] = count_lines(comb, datafile, is_mn)
-        adj_mat[comb] = [0]
-        tmp_mat[comb] = [0]
-        border_points[comb] = defaultdict(list)
-        fut_list, count_tasks = orquestrate_init_data(comb, datafile,
-                                                      len_datasets[comb], 1,
-                                                      0, [], TH_1, is_mn,
-                                                      count_tasks)
-        count_tasks += 1
-        # dataset[comb].points[comb]
-        dataset_tmp[comb] = merge_task_init(*fut_list)
-        neigh_sq_coord[comb] = neigh_squares_query(comb, epsilon,
-                                                   dimensions)
+        count_tasks += dataset[comb].init_data(datafile, is_mn, TH_1, count_tasks)
+        count_tasks += dataset[comb].partial_scan(min_points, TH_1, count_tasks)
+        cluster_labels = compss_wait_on(dataset[comb].cluster_labels)
+        relations = compss_wait_on(dataset[comb].relations)
+        print cluster_labels
+        print relations
+    return
+#        dataset_tmp[comb] = Data()
+#        len_datasets[comb] = count_lines(comb, datafile, is_mn)
+#        adj_mat[comb] = [0]
+#        tmp_mat[comb] = [0]
+#        border_points[comb] = defaultdict(list)
+#        fut_list, count_tasks = orquestrate_init_data(comb, datafile,
+#                                                      len_datasets[comb], 1,
+#                                                      0, [], TH_1, is_mn,
+#                                                      count_tasks)
+#        count_tasks += 1
+#        # dataset[comb].points[comb]
+#        dataset_tmp[comb] = merge_task_init(*fut_list)
+#        neigh_sq_coord[comb] = neigh_squares_query(comb, epsilon,
+#                                                   dimensions)
 
     if print_times:
         compss_barrier()
@@ -90,21 +94,27 @@ def DBSCAN(epsilon, min_points, datafile, is_mn, print_times, *args, **kwargs):
         print "DI Lasted: "+str(di_time)
 
     # Partial Scan And Initial Cluster merging
-    for comb in itertools.product(*dimension_perms):
-        adj_mat[comb] = [0]
-        tmp_mat[comb] = [0]
-        neigh_squares = []
-        for coord in neigh_sq_coord[comb]:
-            neigh_squares.append(dataset_tmp[coord])
-        [fut_list_0,
-         fut_list_1,
-         count_tasks] = orquestrate_scan_merge(dataset_tmp[comb], epsilon,
-                                               min_points, len_datasets[coord],
-                                               1, 0, [[], []], TH_1, count_tasks,
-                                               *neigh_squares)
-        count_tasks += 2
-        dataset[comb],tmp_mat[comb],adj_mat[comb] = merge_task_ps_0(*fut_list_0)
-        border_points[comb] = merge_task_ps_1(*fut_list_1)
+#    for comb in itertools.product(*dimension_perms):
+#        count_tasks += dataset[comb].partial_scan(min_points, TH_1, count_tasks)
+#        cluster_labels = compss_wait_on(dataset[comb].cluster_labels)
+#        relations = compss_wait_on(dataset[comb].relations)
+#        print cluster_labels
+#        print relations
+##        adj_mat[comb] = [0]
+##        tmp_mat[comb] = [0]
+##        neigh_squares = []
+##        for coord in neigh_sq_coord[comb]:
+##            neigh_squares.append(dataset_tmp[coord])
+##        [fut_list_0,
+##         fut_list_1,
+##         count_tasks] = orquestrate_scan_merge(dataset_tmp[comb], epsilon,
+##                                               min_points, len_datasets[coord],
+##                                               1, 0, [[], []], TH_1, count_tasks,
+##                                               *neigh_squares)
+##        count_tasks += 2
+##        dataset[comb],tmp_mat[comb],adj_mat[comb] = merge_task_ps_0(*fut_list_0)
+##        border_points[comb] = merge_task_ps_1(*fut_list_1)
+#    return
 
     if print_times:
         compss_barrier()

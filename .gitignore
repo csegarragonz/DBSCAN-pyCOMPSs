@@ -1,7 +1,7 @@
 #Ignore all the .pyc files
 *.pyc
 *.pyo
-*.swp
+.*.swp
 
 #Ignore the normalized data files
 *n.txt

@@ -1,8 +1,11 @@
 import os
 from itertools import product
 from collections import defaultdict
+from classes.exceptions import IdNotInSquareException
 from task_src.init_data import count_lines, orquestrate_init_data
 from task_src.init_data import merge_task_init_data
+from task_src.partial_scan import orq_scan_merge, merge_relations
+from task_src.partial_scan import merge_cluster_labels
 
 
 class Square(object):
@@ -11,6 +14,7 @@ class Square(object):
         self.coord = coord
         self.epsilon = epsilon
         self.dimensions = dimensions
+        self.len_tot = 0
         self.offset = defaultdict()
         self.len = defaultdict()
         self.__neigh_squares_query()
@@ -21,7 +25,7 @@ class Square(object):
         # of squares per side.
         dim = len(self.coord)
         neigh_squares = []
-        border_squares = [int(min(max(self.epsilon*i, 1), i-1)) for i in 
+        border_squares = [int(min(max(self.epsilon*i, 1), i-1)) for i in
                           self.dimensions]
         perm = []
         for i in range(dim):
@@ -45,6 +49,7 @@ class Square(object):
             self.offset[comb] = prev
             self.len[comb] = count_lines(comb, file_id, is_mn)
             prev += self.len[comb]
+            self.len_tot += self.len[comb]
             fut_list, count_tasks = orquestrate_init_data(comb, file_id,
                                                           self.len[comb], 1,
                                                           0, fut_list, TH_1,
@@ -54,5 +59,17 @@ class Square(object):
         return count_tasks
 
     def get_points(self, comb):
+        if not comb in self.offset:
+            raise IdNotInSquareException(comb, self.coord)
         return self.points[self.offset[comb]: self.offset[comb] + self.len[comb]]
 
+    def partial_scan(self, min_points, TH_1, count_tasks):
+        [fut_list_0,
+         fut_list_1,
+         count_tasks] = orq_scan_merge(self.points, self.epsilon, min_points,
+                                       TH_1, count_tasks, 1, 0, [[], []],
+                                       self.len_tot)
+        count_tasks += 2
+        self.cluster_labels = merge_cluster_labels(*fut_list_0)
+        self.relations, self.cp_count = merge_relations(*fut_list_1)
+        return count_tasks
