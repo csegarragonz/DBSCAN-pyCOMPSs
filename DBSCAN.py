@@ -69,8 +69,6 @@ def DBSCAN(epsilon, min_points, datafile, is_mn, print_times, *args, **kwargs):
         count_tasks += dataset[comb].partial_scan(min_points, TH_1, count_tasks)
         cluster_labels = compss_wait_on(dataset[comb].cluster_labels)
         relations = compss_wait_on(dataset[comb].relations)
-        print cluster_labels
-        print relations
     return
 #        dataset_tmp[comb] = Data()
 #        len_datasets[comb] = count_lines(comb, datafile, is_mn)

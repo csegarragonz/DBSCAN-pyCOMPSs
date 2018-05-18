@@ -4,6 +4,7 @@ import numpy as np
 from pycompss.api.task import task # PyCOMPSs Imports
 from classes.Data import Data # DBSCAN Imports
 from classes import constants
+from classes.DS import DisjointSet
 
 #def orquestrate_scan_merge(data, epsilon, min_points, len_neighs, quocient,
 #                           res, fut_list, TH_1, count_tasks, *args):
@@ -148,16 +149,27 @@ def partial_dbscan(data, epsilon, min_points, quocient, res, len_tot):
 
 
 @task(returns=1)
-def merge_cluster_labels(*args):
-    return [max(i) for i in list(zip(*args))]
+def merge_cluster_labels(relations, *args):
+    tmp = [max(i) for i in list(zip(*args))]
+    for i, label in enumerate(tmp):
+        for num, _list in enumerate(relations):
+            if label in _list:
+                tmp[i] = num
+    return tmp
 
 
-@task(returns=2)
+
+@task(returns=1)
 def merge_relations(*args):
-    cp_count = 0
     out = defaultdict(set)
     for dic in args:
         for key in dic:
             out[key] |= dic[key]
-    return out, cp_count
+    mf_set = DisjointSet(out.keys())
+    for key in out:
+        tmp = list(out[key])
+        for i in range(len(tmp)-1):
+            mf_set.union(tmp[i], tmp[i+1])
+    out = mf_set.get()
+    return out
 

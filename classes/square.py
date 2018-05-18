@@ -70,6 +70,6 @@ class Square(object):
                                        TH_1, count_tasks, 1, 0, [[], []],
                                        self.len_tot)
         count_tasks += 2
-        self.cluster_labels = merge_cluster_labels(*fut_list_0)
-        self.relations, self.cp_count = merge_relations(*fut_list_1)
+        self.relations = merge_relations(*fut_list_1)
+        self.cluster_labels = merge_cluster_labels(self.relations, *fut_list_0)
         return count_tasks
