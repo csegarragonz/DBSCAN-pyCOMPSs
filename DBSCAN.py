@@ -1,39 +1,34 @@
 # DBSCAN 4 PyCOMPSs
-# This version is an attempt to divide merge_task_ps_0 in smaller tasks.
-# The reason why it has been captured in a different script is that previous 
-# version is sufficiently good to consider not ruining it, as done in previous
-# cases.
 # carlos.segarra @ bsc.es
 
-# IMPORTED MODULES
+# Imports
 from collections import defaultdict # General Imports
 from ast import literal_eval
-import itertools
-import time
+import itertools, time, sys, os, argparse
 from collections import deque
 import numpy as np
-import sys
-import os
-import argparse
 from pycompss.api.task import task # PyCOMPSs Imports
 from pycompss.api.api import compss_wait_on
 from pycompss.api.api import compss_barrier
 from pycompss.api.api import compss_delete_object
 from classes.Data import Data # DBSCAN Imports
+from classes.DS import DisjointSet
 from classes.square import Square
-from task_src.init_data import count_lines, orquestrate_init_data
-from task_src.init_data import init_data, merge_task_init, neigh_squares_query
-from task_src.dict_wait_on import dict_compss_wait_on
-from task_src.sync_clusters import orquestrate_sync_clusters, sync_clusters
-from task_src.sync_clusters import merge_task_sync
-from task_src.expand_cluster import unwrap_adj_mat, expand_cluster
 
+def sync_relations(cluster_rules):
+    out = defaultdict(set)
+    for comb in cluster_rules:
+        for key in cluster_rules[comb]:
+            out[key] |= cluster_rules[comb][key]
+    mf_set = DisjointSet(out.keys())
+    for key in out:
+        tmp = list(out[key])
+        for i in range(len(tmp)-1):
+            mf_set.union(tmp[i], tmp[i+1])
+    return mf_set.get()
+
+# DBSCAN Algorithm
 def DBSCAN(epsilon, min_points, datafile, is_mn, print_times, *args, **kwargs):
-    #   TODO: code from scratch the Disjoint Set
-    #   TODO: comment the code apropriately
-    #   TODO: separate the code in different modules
-
-    # DBSCAN Algorithm
     initial_time = time.time()
 
     if is_mn:
@@ -57,26 +52,39 @@ def DBSCAN(epsilon, min_points, datafile, is_mn, print_times, *args, **kwargs):
             break
     dimension_perms = [range(i) for i in dimensions]
     dataset = defaultdict()
-    dataset_tmp = defaultdict()
-    neigh_sq_coord = defaultdict()
-    len_datasets = defaultdict()
-    adj_mat = defaultdict()
-    tmp_mat = defaultdict()
-    border_points = defaultdict()
+    links = defaultdict()
+
+#    dataset_tmp = defaultdict()
+#    neigh_sq_coord = defaultdict()
+#    len_datasets = defaultdict()
+#    adj_mat = defaultdict()
+#    tmp_mat = defaultdict()
+#    border_points = defaultdict()
+
     for comb in itertools.product(*dimension_perms):
         dataset[comb] = Square(comb, epsilon, dimensions)
         count_tasks += dataset[comb].init_data(datafile, is_mn, TH_1, count_tasks)
         count_tasks += dataset[comb].partial_scan(min_points, TH_1, count_tasks)
-        cluster_labels = compss_wait_on(dataset[comb].cluster_labels)
-        relations = compss_wait_on(dataset[comb].relations)
-        print relations
-        print cluster_labels
 
+    # We loop again since the first loop initialises all the variables that
+    # are used afterwards
     for comb in itertools.product(*dimension_perms):
         neigh_sq_id = dataset[comb].neigh_sq_id
-        versions = []
+        labels_versions = []
+        for neigh_comb in neigh_sq_id:
+            # We obtain the labels found for our points by our neighbours.
+            labels_versions.append(dataset[neigh_comb].cluster_labels[comb])
+        links[comb] = dataset[comb].sync_labels(*labels_versions)
 
-    return
+    for comb in itertools.product(*dimension_perms):
+        links[comb] = compss_wait_on(links[comb])
+
+    updated_links = sync_relations(links)
+    print updated_links
+    for comb in itertools.product(*dimension_perms):
+        dataset[comb].update_labels(updated_links, is_mn, datafile)
+
+    return 1
 #        dataset_tmp[comb] = Data()
 #        len_datasets[comb] = count_lines(comb, datafile, is_mn)
 #        adj_mat[comb] = [0]

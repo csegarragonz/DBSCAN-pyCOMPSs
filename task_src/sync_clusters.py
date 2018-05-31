@@ -2,6 +2,7 @@
 from collections import defaultdict # General Imports
 import os
 import numpy as np
+from classes import constants
 from pycompss.api.task import task # PyCOMPSs Imports
 from classes.Data import Data # DBSCAN Imports
 
@@ -68,3 +69,53 @@ def sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc, quocient,
                             adj_mat_copy[current_clust_id])):
                         adj_mat_copy[current_clust_id].append(adj_mat_elem)
     return adj_mat_copy
+
+@task(returns=1)
+def sync_task(coord, cluster_labels, core_points, neigh_sq_id, *labels_versions):
+    out = defaultdict(set)
+    #print cluster_labels
+    for num_label, label in enumerate(cluster_labels):
+        if core_points[num_label] == constants.CORE_POINT:
+            # Current cluster label unique identifier
+            point_id = (coord, cluster_labels[num_label])
+            # Labels for the same point obtained by different workers
+            point_versions = [vec[num_label] for vec in labels_versions]
+            print "jeje"
+            print point_id
+            print type(point_id)
+            for num_dif, p_ver in enumerate(point_versions):
+                out[point_id].add((neigh_sq_id[num_dif], p_ver))
+    return out
+
+
+@task()
+def update_task(cluster_labels, coord, points, thres, updated_relations, 
+                is_mn, file_id):
+        direct_link = defaultdict()
+        for num, label in enumerate(cluster_labels):
+            if label in direct_link:
+                cluster_labels[num] = direct_link[label]
+            else:
+                id_tuple = (coord, label)
+                for num_list, _list in enumerate(updated_relations):
+                    if id_tuple in _list:
+                        direct_link[label] = num_list
+                        cluster_labels[num] = direct_link[label]
+                        break
+
+        # Update all files (for the moment writing to another one)
+        if is_mn:
+            path = "/gpfs/projects/bsc19/COMPSs_DATASETS/dbscan/"+str(file_id)
+        else:
+            path = "~/DBSCAN/data/"+str(file_id)
+        path = os.path.expanduser(path)
+        tmp_string = path+"/"+str(coord[0])
+        for num, j in enumerate(coord):
+            if num > 0:
+                tmp_string += "_"+str(j)
+        tmp_string += "_OUT.txt"
+        f_out = open(tmp_string, "w")
+        for num, val in enumerate(cluster_labels):
+            f_out.write(str(points[thres+num])+" "
+                        + str(cluster_labels[num]) + "\n")
+        f_out.close()

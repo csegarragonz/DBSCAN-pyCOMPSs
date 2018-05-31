@@ -108,24 +108,26 @@ def orq_scan_merge(data, epsilon, min_points, TH_1, count_tasks, quocient,
     if (len_total/quocient) > TH_1:
         [fut_list[0],
          fut_list[1],
+         fut_list[2],
          count_tasks] = orq_scan_merge(data, epsilon, min_points, TH_1,
                                        count_tasks, quocient*2, res*2 + 0,
                                        fut_list, len_total)
         [fut_list[0],
          fut_list[1],
+         fut_list[2],
          count_tasks] = orq_scan_merge(data, epsilon, min_points, TH_1,
                                        count_tasks, quocient*2, res*2 + 1,
                                        fut_list, len_total)
     else:
-        obj = [[], []]
+        obj = [[], [], []]
         count_tasks += 1
-        obj[0], obj[1] = partial_dbscan(data, epsilon, min_points, quocient, res,
-                                        len_total)
+        obj[0], obj[1], obj[2] = partial_dbscan(data, epsilon, min_points,
+                                                quocient, res, len_total)
         for num, _list in enumerate(fut_list):
             _list.append(obj[num])
-    return fut_list[0], fut_list[1], count_tasks
+    return fut_list[0], fut_list[1], fut_list[2], count_tasks
 
-@task(returns=2)
+@task(returns=3)
 def partial_dbscan(data, epsilon, min_points, quocient, res, len_tot):
     indices = [i for i in range(len_tot) if ((i % quocient) == res)]
     cluster_labels = [constants.NOT_PROCESSED for i in range(len_tot)]
@@ -145,19 +147,18 @@ def partial_dbscan(data, epsilon, min_points, quocient, res, len_tot):
             cluster_count += 1
         else:
             cluster_labels[i] = constants.NOISE
-    return cluster_labels, relations
-
+    return cluster_labels, relations, core_points
 
 @task(returns=1)
-def merge_cluster_labels(relations, *args):
+def merge_cluster_labels(relations, comb, chunks, *args):
     tmp = [max(i) for i in list(zip(*args))]
     for i, label in enumerate(tmp):
         for num, _list in enumerate(relations):
             if label in _list:
                 tmp[i] = num
-    return tmp
-
-
+    # We pre-chunk the cluster labels, so the labels of each region are
+    # accesssible separately.
+    return tmp[chunks[0]: chunks[1]]
 
 @task(returns=1)
 def merge_relations(*args):
@@ -173,3 +174,7 @@ def merge_relations(*args):
     out = mf_set.get()
     return out
 
+@task(returns=1)
+def merge_core_points(chunks, comb, *args):
+    tmp = [max(i) for i in list(zip(*args))]
+    return tmp[chunks[comb][0]: chunks[comb][1]]

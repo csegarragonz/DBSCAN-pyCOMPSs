@@ -61,34 +61,34 @@ def init_data(tupla, file_id, quocient, res, is_mn):
     data_pos.value = [data_pos.value, tmp_vec]
     return data_pos
 
-@task(returns=1)
-def merge_task_init(*args):
-    tmp_data = Data()
-    tmp_data.value = [np.vstack([i.value[0] for i in args]),
-                      np.concatenate([i.value[1] for i in args])]
-    return tmp_data
+#@task(returns=1)
+#def merge_task_init(*args):
+#    tmp_data = Data()
+#    tmp_data.value = [np.vstack([i.value[0] for i in args]),
+#                      np.concatenate([i.value[1] for i in args])]
+#    return tmp_data
 
 @task(returns=1)
 def merge_task_init_data(*args):
     tmp_data = np.vstack([i.value[0] for i in args])
     return tmp_data
 
-def neigh_squares_query(square, epsilon, dimensions):
-    # Only multiples of 10 are supported as possible number
-    # of squares per side.
-    dim = len(square)
-    neigh_squares = []
-    border_squares = [int(min(max(epsilon*i, 1), i-1)) for i in dimensions]
-    perm = []
-    for i in range(dim):
-        perm.append(range(-border_squares[i], border_squares[i] + 1))
-    for comb in itertools.product(*perm):
-        current = []
-        for i in range(dim):
-            if square[i] + comb[i] in range(dimensions[i]):
-                current.append(square[i]+comb[i])
-        if len(current) == dim and current != list(square):
-            neigh_squares.append(tuple(current))
-    neigh_squares.append(tuple(square))
-    return tuple(neigh_squares)
+#def neigh_squares_query(square, epsilon, dimensions):
+#    # Only multiples of 10 are supported as possible number
+#    # of squares per side.
+#    dim = len(square)
+#    neigh_squares = []
+#    border_squares = [int(min(max(epsilon*i, 1), i-1)) for i in dimensions]
+#    perm = []
+#    for i in range(dim):
+#        perm.append(range(-border_squares[i], border_squares[i] + 1))
+#    for comb in itertools.product(*perm):
+#        current = []
+#        for i in range(dim):
+#            if square[i] + comb[i] in range(dimensions[i]):
+#                current.append(square[i]+comb[i])
+#        if len(current) == dim and current != list(square):
+#            neigh_squares.append(tuple(current))
+#    neigh_squares.append(tuple(square))
+#    return tuple(neigh_squares)
 
