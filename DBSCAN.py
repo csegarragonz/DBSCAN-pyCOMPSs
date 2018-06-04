@@ -42,6 +42,7 @@ def DBSCAN(epsilon, min_points, datafile, is_mn, print_times, *args, **kwargs):
     # Initial Definitions (necessary?)
     dataset_info = "dataset.txt"
     count_tasks = 0
+    count_tasks_2 = 0
 
     # Data inisialitation
     dimensions = []
@@ -57,10 +58,9 @@ def DBSCAN(epsilon, min_points, datafile, is_mn, print_times, *args, **kwargs):
 
     for comb in itertools.product(*dimension_perms):
         dataset[comb] = Square(comb, epsilon, dimensions)
-        count_tasks += dataset[comb].init_data(datafile, is_mn, TH_1, count_tasks)
+        count_tasks_2 += dataset[comb].init_data(datafile, is_mn, TH_1,count_tasks_2)
         count_tasks += dataset[comb].partial_scan(min_points, TH_1, count_tasks)
 
-    count_tasks = 0
     if print_times:
         compss_barrier()
         print "Partial Scan Tasks Finished"

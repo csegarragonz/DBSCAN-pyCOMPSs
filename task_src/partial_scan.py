@@ -43,7 +43,8 @@ def partial_dbscan(data, epsilon, min_points, quocient, res, len_tot):
         if neigh_sum >= min_points:
             core_points[i] = constants.CORE_POINT
             cluster_labels[i] = cluster_count
-            for j, _ in enumerate(neigh_points):
+            neigh_idx = np.where(neigh_points)
+            for j  in neigh_idx[0]:
                 if core_points[j] == constants.CORE_POINT:
                     relations[cluster_count].add(cluster_labels[j])
                 cluster_labels[j] = cluster_count
