@@ -47,7 +47,6 @@ class Square(object):
     def init_data(self, file_id, is_mn, TH_1, count_tasks):
         fut_list = []
         prev = 0
-        count_tasks
         for comb in self.neigh_sq_id:
             self.offset[comb] = prev
             self.len[comb] = count_lines(comb, file_id, is_mn)
@@ -81,6 +80,7 @@ class Square(object):
         self.relations = merge_relations(*fut_list_1)
         self.cluster_labels = defaultdict(list)
         for comb in self.neigh_sq_id:
+            count_tasks += 1
             self.cluster_labels[comb] = merge_cluster_labels(self.relations,
                                                     comb, self.neigh_thres[comb],
                                                     *fut_list_0)
