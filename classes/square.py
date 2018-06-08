@@ -1,4 +1,5 @@
 from itertools import product
+import os
 from collections import defaultdict
 from task_src.init_data import count_lines, orquestrate_init_data
 from task_src.init_data import merge_task_init_data
@@ -84,6 +85,15 @@ class Square(object):
                          self.core_points, self.neigh_sq_id, *labels_versions)
 
     def update_labels(self, updated_relations, is_mn, file_id):
+        if is_mn:
+            path = "/gpfs/projects/bsc19/COMPSs_DATASETS/dbscan/"+str(file_id)
+        else:
+            path = "~/DBSCAN/data/"+str(file_id)
+        path = os.path.expanduser(path)
+        tmp_string = path+"/"+str(self.coord[0])
+        for num, j in enumerate(self.coord):
+            if num > 0:
+                tmp_string += "_"+str(j)
+        tmp_string += "_OUT.txt"
         update_task(self.cluster_labels[self.coord], self.coord, self.points,
-                    self.neigh_thres[self.coord][0], updated_relations, is_mn,
-                    file_id)
+                    self.neigh_thres[self.coord][0], updated_relations,tmp_string)

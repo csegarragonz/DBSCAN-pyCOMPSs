@@ -4,6 +4,7 @@ import os
 import numpy as np
 from classes import constants
 from pycompss.api.task import task # PyCOMPSs Imports
+from pycompss.api.parameter import FILE_OUT
 from classes.Data import Data # DBSCAN Imports
 
 def orquestrate_sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc,
@@ -88,9 +89,9 @@ def sync_task(coord, cluster_labels, core_points, neigh_sq_id, *labels_versions)
     return out
 
 
-@task()
+@task(file_path = FILE_OUT)
 def update_task(cluster_labels, coord, points, thres, updated_relations, 
-                is_mn, file_id):
+                file_path):
         direct_link = defaultdict()
         for num, label in enumerate(cluster_labels):
             if label in direct_link:
@@ -104,17 +105,7 @@ def update_task(cluster_labels, coord, points, thres, updated_relations,
                         break
 
         # Update all files (for the moment writing to another one)
-        if is_mn:
-            path = "/gpfs/projects/bsc19/COMPSs_DATASETS/dbscan/"+str(file_id)
-        else:
-            path = "~/DBSCAN/data/"+str(file_id)
-        path = os.path.expanduser(path)
-        tmp_string = path+"/"+str(coord[0])
-        for num, j in enumerate(coord):
-            if num > 0:
-                tmp_string += "_"+str(j)
-        tmp_string += "_OUT.txt"
-        f_out = open(tmp_string, "w")
+        f_out = open(file_path, "w")
         for num, val in enumerate(cluster_labels):
             f_out.write(str(points[thres+num])+" "
                         + str(cluster_labels[num]) + "\n")
