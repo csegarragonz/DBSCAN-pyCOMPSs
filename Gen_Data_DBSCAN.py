@@ -38,7 +38,7 @@ def init_data(comb, path, num_points_max, centers, std):
 
 def main(file_count, dimensions):
     dimensions = literal_eval(dimensions)
-    num_points_max = 30
+    num_points_max = 3000
     dim = len(dimensions)
     num_centers = len(dimensions)
     centers = np.random.sample((num_centers, dim))

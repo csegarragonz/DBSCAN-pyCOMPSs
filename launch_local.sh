@@ -46,5 +46,7 @@
 
 # DBSCAN Local execution: -d for debugging, -t for tracing and -g for the dependency graph.
 #    --debug=true \
+#    --graph=true \
 runcompss \
+    --graph=true \
     ./DBSCAN.py 0.1 10 1

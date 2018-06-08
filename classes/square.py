@@ -1,15 +1,10 @@
-import os
 from itertools import product
 from collections import defaultdict
-from classes import constants
-from pycompss.api.task import task
-from classes.exceptions import IdNotInSquareException
 from task_src.init_data import count_lines, orquestrate_init_data
 from task_src.init_data import merge_task_init_data
 from task_src.partial_scan import orq_scan_merge, merge_relations
 from task_src.partial_scan import merge_cluster_labels, merge_core_points
 from task_src.sync_clusters import sync_task, update_task
-
 
 class Square(object):
 
@@ -21,7 +16,6 @@ class Square(object):
         self.offset = defaultdict()
         self.len = defaultdict()
         self.__neigh_squares_query()
-
 
     def __neigh_squares_query(self):
         # Only multiples of 10 are supported as possible number
@@ -43,7 +37,6 @@ class Square(object):
         neigh_squares.append(tuple(self.coord))
         self.neigh_sq_id = tuple(neigh_squares)
 
-
     def init_data(self, file_id, is_mn, TH_1, count_tasks):
         fut_list = []
         prev = 0
@@ -61,13 +54,11 @@ class Square(object):
         self.__set_neigh_thres()
         return count_tasks
 
-
     def __set_neigh_thres(self):
         out = defaultdict(list)
         for comb in self.neigh_sq_id:
             out[comb] = [self.offset[comb], self.offset[comb] + self.len[comb]]
         self.neigh_thres = out
-
 
     def partial_scan(self, min_points, TH_1, count_tasks):
         [fut_list_0,
@@ -91,7 +82,6 @@ class Square(object):
     def sync_labels(self, *labels_versions):
         return sync_task(self.coord, self.cluster_labels[self.coord],
                          self.core_points, self.neigh_sq_id, *labels_versions)
-
 
     def update_labels(self, updated_relations, is_mn, file_id):
         update_task(self.cluster_labels[self.coord], self.coord, self.points,

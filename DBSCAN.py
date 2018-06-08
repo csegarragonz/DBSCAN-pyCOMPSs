@@ -1,7 +1,5 @@
 # DBSCAN 4 PyCOMPSs
-# carlos.segarra @ bsc.es
 
-# Imports
 from collections import defaultdict # General Imports
 from ast import literal_eval
 import itertools, time, sys, os, argparse
@@ -32,12 +30,11 @@ def sync_relations(cluster_rules):
 def DBSCAN(epsilon, min_points, datafile, is_mn, print_times, *args, **kwargs):
     initial_time = time.time()
 
+    # This threshold determines the granularity of the tasks
     if is_mn:
         TH_1=11000
-        TH_2=1100
     else:
         TH_1=10000
-        TH_2=100
 
     # Initial Definitions (necessary?)
     dataset_info = "dataset.txt"
@@ -56,9 +53,13 @@ def DBSCAN(epsilon, min_points, datafile, is_mn, print_times, *args, **kwargs):
     dataset = defaultdict()
     links = defaultdict()
 
+    #For each square in the grid
     for comb in itertools.product(*dimension_perms):
+        # Initialise the square object
         dataset[comb] = Square(comb, epsilon, dimensions)
+        # Load the data to it
         count_tasks_2 += dataset[comb].init_data(datafile, is_mn, TH_1,count_tasks_2)
+        # Perform a local clustering
         count_tasks += dataset[comb].partial_scan(min_points, TH_1, count_tasks)
 
     if print_times:
@@ -72,21 +73,26 @@ def DBSCAN(epsilon, min_points, datafile, is_mn, print_times, *args, **kwargs):
             cp_count += dataset[comb].core_points.count(constants.CORE_POINT)
         print "Number of core points found: "+str(cp_count)
 
-    # We loop again since the first loop initialises all the variables that
-    # are used afterwards
+    # In spite of not needing a synchronization we loop again since the first 
+    # loop initialises all the future objects that are used afterwards
     for comb in itertools.product(*dimension_perms):
+        # We retrieve all the neighbour square ids from the current square
         neigh_sq_id = dataset[comb].neigh_sq_id
         labels_versions = []
         for neigh_comb in neigh_sq_id:
             # We obtain the labels found for our points by our neighbours.
             labels_versions.append(dataset[neigh_comb].cluster_labels[comb])
+        # We merge all the different labels found and return merging rules
         links[comb] = dataset[comb].sync_labels(*labels_versions)
         count_tasks += 1
 
+    # We synchronize all the merging loops
     for comb in itertools.product(*dimension_perms):
         links[comb] = compss_wait_on(links[comb])
         count_tasks += 1
 
+    # We sync all the links locally and broadcast the updated global labels
+    # to all the workers
     updated_links = sync_relations(links)
     for comb in itertools.product(*dimension_perms):
         dataset[comb].update_labels(updated_links, is_mn, datafile)
@@ -96,91 +102,7 @@ def DBSCAN(epsilon, min_points, datafile, is_mn, print_times, *args, **kwargs):
     print "Time elapsed: " + str(time.time()-initial_time)
 
     return 1
-#        dataset_tmp[comb] = Data()
-#        len_datasets[comb] = count_lines(comb, datafile, is_mn)
-#        adj_mat[comb] = [0]
-#        tmp_mat[comb] = [0]
-#        border_points[comb] = defaultdict(list)
-#        fut_list, count_tasks = orquestrate_init_data(comb, datafile,
-#                                                      len_datasets[comb], 1,
-#                                                      0, [], TH_1, is_mn,
-#                                                      count_tasks)
-#        count_tasks += 1
-#        # dataset[comb].points[comb]
-#        dataset_tmp[comb] = merge_task_init(*fut_list)
-#        neigh_sq_coord[comb] = neigh_squares_query(comb, epsilon,
-#                                                   dimensions)
 
-    if print_times:
-        compss_barrier()
-        print "Data Inisialisation Tasks Finished"
-        di_time = time.time() - initial_time
-        print "DI Lasted: "+str(di_time)
-
-    # Partial Scan And Initial Cluster merging
-#    for comb in itertools.product(*dimension_perms):
-#        count_tasks += dataset[comb].partial_scan(min_points, TH_1, count_tasks)
-#        cluster_labels = compss_wait_on(dataset[comb].cluster_labels)
-#        relations = compss_wait_on(dataset[comb].relations)
-#        print cluster_labels
-#        print relations
-##        adj_mat[comb] = [0]
-##        tmp_mat[comb] = [0]
-##        neigh_squares = []
-##        for coord in neigh_sq_coord[comb]:
-##            neigh_squares.append(dataset_tmp[coord])
-##        [fut_list_0,
-##         fut_list_1,
-##         count_tasks] = orquestrate_scan_merge(dataset_tmp[comb], epsilon,
-##                                               min_points, len_datasets[coord],
-##                                               1, 0, [[], []], TH_1, count_tasks,
-##                                               *neigh_squares)
-##        count_tasks += 2
-##        dataset[comb],tmp_mat[comb],adj_mat[comb] = merge_task_ps_0(*fut_list_0)
-##        border_points[comb] = merge_task_ps_1(*fut_list_1)
-#    return
-
-
-    # Cluster Synchronisation
-    for comb in itertools.product(*dimension_perms):
-        compss_delete_object(dataset_tmp[comb])
-        neigh_squares = []
-        neigh_squares_loc = []
-        len_neighs = 0
-        for coord in neigh_sq_coord[comb]:
-            neigh_squares_loc.append(coord)
-            neigh_squares.append(dataset[coord])
-            len_neighs += len_datasets[coord]
-        [fut_list,
-         count_tasks] = orquestrate_sync_clusters(dataset[comb], adj_mat[comb],
-                                                  epsilon, comb,
-                                                  neigh_squares_loc,
-                                                  len_neighs, 1, 0, [], TH_2,
-                                                  count_tasks, *neigh_squares)
-        count_tasks += 1
-        adj_mat[comb] = merge_task_sync(adj_mat[comb], *fut_list)
-
-    # Cluster list update
-    border_points = dict_compss_wait_on(border_points, dimension_perms)
-    tmp_mat = dict_compss_wait_on(tmp_mat, dimension_perms)
-    adj_mat = dict_compss_wait_on(adj_mat, dimension_perms)
-
-    if print_times:
-        print "Cluster Synchronisation Tasks Finished"
-        cs_time = time.time() - initial_time
-        print "CS Lasted: "+str(cs_time - ps_time)
-
-    links_list = unwrap_adj_mat(tmp_mat, adj_mat, neigh_sq_coord,
-                                dimension_perms)
-    for comb in itertools.product(*dimension_perms):
-        neigh_squares = []
-        for coord in neigh_sq_coord[comb]:
-            neigh_squares.append(dataset[coord])
-        count_tasks += 1
-        expand_cluster(dataset[comb], epsilon, border_points[comb],
-                       dimension_perms, links_list, comb, tmp_mat[comb],
-                       datafile, is_mn, *neigh_squares)
-    return 1
 
 if __name__ == "__main__":
     time.sleep(5)
