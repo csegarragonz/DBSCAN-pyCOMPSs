@@ -34,7 +34,7 @@ def DBSCAN(epsilon, min_points, datafile, is_mn, print_times, *args, **kwargs):
     if is_mn:
         TH_1=11000
     else:
-        TH_1=10000
+        TH_1=100
 
     # Initial Definitions (necessary?)
     dataset_info = "dataset.txt"
@@ -58,9 +58,9 @@ def DBSCAN(epsilon, min_points, datafile, is_mn, print_times, *args, **kwargs):
         # Initialise the square object
         dataset[comb] = Square(comb, epsilon, dimensions)
         # Load the data to it
-        count_tasks_2 += dataset[comb].init_data(datafile, is_mn, TH_1,count_tasks_2)
+        count_tasks = dataset[comb].init_data(datafile, is_mn, TH_1,count_tasks_2)
         # Perform a local clustering
-        count_tasks += dataset[comb].partial_scan(min_points, TH_1, count_tasks)
+        count_tasks = dataset[comb].partial_scan(min_points, TH_1, count_tasks)
 
     if print_times:
         compss_barrier()

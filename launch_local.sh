@@ -49,4 +49,4 @@
 #    --graph=true \
 runcompss \
     --graph=true \
-    ./DBSCAN.py 0.1 10 1
+    ./DBSCAN.py 0.1 10 4

@@ -74,16 +74,12 @@ def sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc, quocient,
 @task(returns=1)
 def sync_task(coord, cluster_labels, core_points, neigh_sq_id, *labels_versions):
     out = defaultdict(set)
-    #print cluster_labels
     for num_label, label in enumerate(cluster_labels):
         if core_points[num_label] == constants.CORE_POINT:
             # Current cluster label unique identifier
             point_id = (coord, cluster_labels[num_label])
             # Labels for the same point obtained by different workers
             point_versions = [vec[num_label] for vec in labels_versions]
-            print "jeje"
-            print point_id
-            print type(point_id)
             for num_dif, p_ver in enumerate(point_versions):
                 out[point_id].add((neigh_sq_id[num_dif], p_ver))
     return out
