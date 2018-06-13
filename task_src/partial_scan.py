@@ -1,10 +1,9 @@
-#Imports
-from collections import defaultdict # General Imports
+from collections import defaultdict
 import numpy as np
-from pycompss.api.task import task # PyCOMPSs Imports
-from classes.Data import Data # DBSCAN Imports
+from pycompss.api.task import task
 from classes import constants
 from classes.DS import DisjointSet
+
 
 def orq_scan_merge(data, epsilon, min_points, TH_1, count_tasks, quocient,
                    res, fut_list, len_total):
@@ -30,6 +29,7 @@ def orq_scan_merge(data, epsilon, min_points, TH_1, count_tasks, quocient,
             _list.append(obj[num])
     return fut_list[0], fut_list[1], fut_list[2], count_tasks
 
+
 @task(returns=3)
 def partial_dbscan(data, epsilon, min_points, quocient, res, len_tot):
     indices = [i for i in range(len_tot) if ((i % quocient) == res)]
@@ -38,24 +38,21 @@ def partial_dbscan(data, epsilon, min_points, quocient, res, len_tot):
     cluster_count = 0
     relations = defaultdict(set)
     for i in indices:
-        neigh_points = np.linalg.norm(data - data[i], axis = 1) < epsilon
+        neigh_points = np.linalg.norm(data - data[i], axis=1) < epsilon
         neigh_sum = np.sum(neigh_points)
         if neigh_sum >= min_points:
             core_points[i] = constants.CORE_POINT
             cluster_labels[i] = cluster_count
             neigh_idx = np.where(neigh_points)
-            #no_lbl=[core_points[j]==constants.NOT_PROCESSED for j in neigh_idx[0]]
-            #no_lbl = np.where(no_lbl)[0]
-            for j  in neigh_idx[0]:
+            for j in neigh_idx[0]:
                 if core_points[j] == constants.CORE_POINT:
                     relations[cluster_count].add(cluster_labels[j])
-                # TODO: if in doubt remove line below and check
-                # for j in no_lbl:
                 cluster_labels[j] = cluster_count
             cluster_count += 1
         else:
             cluster_labels[i] = constants.NOISE
     return cluster_labels, relations, core_points
+
 
 @task(returns=1)
 def merge_cluster_labels(relations, comb, chunks, *args):
@@ -67,6 +64,7 @@ def merge_cluster_labels(relations, comb, chunks, *args):
     # We pre-chunk the cluster labels, so the labels of each region are
     # accesssible separately.
     return tmp[chunks[0]: chunks[1]]
+
 
 @task(returns=1)
 def merge_relations(*args):
@@ -81,6 +79,7 @@ def merge_relations(*args):
             mf_set.union(tmp[i], tmp[i+1])
     out = mf_set.get()
     return out
+
 
 @task(returns=1)
 def merge_core_points(chunks, comb, *args):

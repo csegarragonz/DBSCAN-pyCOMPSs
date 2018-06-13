@@ -7,6 +7,7 @@ from task_src.partial_scan import orq_scan_merge, merge_relations
 from task_src.partial_scan import merge_cluster_labels, merge_core_points
 from task_src.sync_clusters import sync_task, update_task
 
+
 class Square(object):
 
     def __init__(self, coord, epsilon, dimensions):
@@ -19,8 +20,6 @@ class Square(object):
         self.__neigh_squares_query()
 
     def __neigh_squares_query(self):
-        # Only multiples of 10 are supported as possible number
-        # of squares per side.
         dim = len(self.coord)
         neigh_squares = []
         border_squares = [int(min(max(self.epsilon*i, 1), i-1)) for i in
@@ -73,9 +72,7 @@ class Square(object):
         self.cluster_labels = defaultdict(list)
         for comb in self.neigh_sq_id:
             count_tasks += 1
-            self.cluster_labels[comb] = merge_cluster_labels(self.relations,
-                                                    comb, self.neigh_thres[comb],
-                                                    *fut_list_0)
+            self.cluster_labels[comb] = merge_cluster_labels(self.relations, comb, self.neigh_thres[comb], *fut_list_0)
         self.core_points = merge_core_points(self.neigh_thres, self.coord,
                                              *fut_list_2)
         return count_tasks
@@ -96,4 +93,4 @@ class Square(object):
                 tmp_string += "_"+str(j)
         tmp_string += "_OUT.txt"
         update_task(self.cluster_labels[self.coord], self.coord, self.points,
-                    self.neigh_thres[self.coord][0], updated_relations,tmp_string)
+                    self.neigh_thres[self.coord][0], updated_relations, tmp_string)

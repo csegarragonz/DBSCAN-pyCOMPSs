@@ -1,11 +1,8 @@
-#Imports
-from collections import defaultdict # General Imports
-import os
-import numpy as np
+from collections import defaultdict
 from classes import constants
-from pycompss.api.task import task # PyCOMPSs Imports
+from pycompss.api.task import task
 from pycompss.api.parameter import FILE_OUT
-from classes.Data import Data # DBSCAN Imports
+
 
 def orquestrate_sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc,
                               len_neighs, quocient, res, fut_list, TH_2,
@@ -27,6 +24,7 @@ def orquestrate_sync_clusters(data, adj_mat, epsilon, coord, neigh_sq_loc,
                                       neigh_sq_loc, quocient, res, len_neighs,
                                       *args))
     return fut_list, count_tasks
+
 
 @task(returns=list)
 def merge_task_sync(adj_mat, *args):
@@ -53,8 +51,8 @@ def sync_task(coord, cluster_labels, core_points, neigh_sq_id, *labels_versions)
     return out
 
 
-@task(file_path = FILE_OUT)
-def update_task(cluster_labels, coord, points, thres, updated_relations, 
+@task(file_path=FILE_OUT)
+def update_task(cluster_labels, coord, points, thres, updated_relations,
                 file_path):
         direct_link = defaultdict()
         for num, label in enumerate(cluster_labels):
@@ -67,8 +65,7 @@ def update_task(cluster_labels, coord, points, thres, updated_relations,
                         direct_link[label] = num_list
                         cluster_labels[num] = direct_link[label]
                         break
-
-        # Update all files (for the moment writing to another one)
+        # Write output to files.
         f_out = open(file_path, "w")
         for num, val in enumerate(cluster_labels):
             f_out.write(str(points[thres+num])+" "

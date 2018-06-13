@@ -1,11 +1,10 @@
-#Imports
-from pandas import read_csv # General Imports
+from pandas import read_csv
 from collections import defaultdict
 import os
-import itertools
 import numpy as np
-from pycompss.api.task import task # PyCOMPSs Imports
+from pycompss.api.task import task
 from pycompss.api.parameter import FILE_IN
+
 
 def count_lines(tupla, file_id, is_mn):
     if is_mn:
@@ -22,6 +21,7 @@ def count_lines(tupla, file_id, is_mn):
         for i, line in enumerate(infile):
             pass
         return i+1
+
 
 def orquestrate_init_data(tupla, file_id, len_data, quocient,
                           res, fut_list, TH_1, is_mn,
@@ -51,14 +51,15 @@ def orquestrate_init_data(tupla, file_id, len_data, quocient,
         fut_list.append(tmp_f)
     return fut_list, count_tasks
 
-@task(isDistributed = True, file_path = FILE_IN, returns=1)
+
+# @task(isDistributed=True, file_path=FILE_IN, returns=1)
+@task(file_path=FILE_IN, returns=1)
 def init_data(file_path, quocient, res, is_mn):
     df = read_csv(file_path, sep=' ', skiprows=lambda x: (x % quocient)
-                  != res, header = None)
+                  != res, header=None)
     data = df.values.astype(float)
-    #tmp_vec = -2*np.ones(np.shape(data_pos.value)[0])
-    #data_pos.value = [data_pos.value, tmp_vec]
     return data
+
 
 @task(returns=1)
 def merge_task_init_data(*args):
