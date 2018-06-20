@@ -95,9 +95,9 @@ def DBSCAN(epsilon, min_points, datafile, is_mn, print_times, *args, **kwargs):
 
     # We lastly output the results to text files. For performance testing
     # the following two lines could be commented.
-    for comb in itertools.product(*dimension_perms):
-        dataset[comb].update_labels(updated_links, is_mn, datafile)
-    compss_barrier()
+#    for comb in itertools.product(*dimension_perms):
+#        dataset[comb].update_labels(updated_links, is_mn, datafile)
+#    compss_barrier()
 
     print "Total number of tasks scheduled: "+str(count_tasks)
     print "Number of clusters found: "+str(len(updated_links))
